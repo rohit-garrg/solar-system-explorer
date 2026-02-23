@@ -1,0 +1,75 @@
+[
+  {
+    "key": "mercury",
+    "name": "Mercury",
+    "type": "planet",
+    "texture": "/textures/mercury.jpg",
+    "segments": 64
+  },
+  {
+    "key": "venus",
+    "name": "Venus",
+    "type": "planet",
+    "texture": "/textures/venus.jpg",
+    "cloudTexture": "/textures/venus-clouds.jpg",
+    "cloudOpacity": 0.7,
+    "cloudRadiusScale": 1.03,
+    "segments": 64
+  },
+  {
+    "key": "earth",
+    "name": "Earth",
+    "type": "planet",
+    "texture": "/textures/earth/surface.jpg",
+    "cloudTexture": "/textures/earth/clouds.png",
+    "nightTexture": "/textures/earth/night.jpg",
+    "cloudOpacity": 0.4,
+    "cloudRadiusScale": 1.02,
+    "cloudRotationMultiplier": 1.1,
+    "segments": 64
+  },
+  {
+    "key": "mars",
+    "name": "Mars",
+    "type": "planet",
+    "texture": "/textures/mars.jpg",
+    "segments": 64
+  },
+  {
+    "key": "jupiter",
+    "name": "Jupiter",
+    "type": "planet",
+    "texture": "/textures/jupiter.jpg",
+    "segments": 64
+  },
+  {
+    "key": "saturn",
+    "name": "Saturn",
+    "type": "planet",
+    "texture": "/textures/saturn.jpg",
+    "hasRings": true,
+    "ringTexture": "/textures/saturn-ring.png",
+    "segments": 64
+  },
+  {
+    "key": "uranus",
+    "name": "Uranus",
+    "type": "planet",
+    "texture": "/textures/uranus.jpg",
+    "segments": 64
+  },
+  {
+    "key": "neptune",
+    "name": "Neptune",
+    "type": "planet",
+    "texture": "/textures/neptune.jpg",
+    "segments": 64
+  },
+  {
+    "key": "pluto",
+    "name": "Pluto",
+    "type": "planet",
+    "texture": "/textures/pluto.jpg",
+    "segments": 64
+  }
+]

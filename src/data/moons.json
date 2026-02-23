@@ -1,0 +1,81 @@
+{
+  "earth": [
+    {
+      "key": "moon",
+      "name": "The Moon",
+      "texture": "/textures/moons/moon.jpg"
+    }
+  ],
+  "mars": [
+    {
+      "key": "phobos",
+      "name": "Phobos",
+      "texture": "/textures/moons/phobos.jpg"
+    },
+    {
+      "key": "deimos",
+      "name": "Deimos",
+      "texture": "/textures/moons/deimos.jpg"
+    }
+  ],
+  "jupiter": [
+    {
+      "key": "io",
+      "name": "Io",
+      "texture": "/textures/moons/io.jpg"
+    },
+    {
+      "key": "europa",
+      "name": "Europa",
+      "texture": "/textures/moons/europa.jpg"
+    },
+    {
+      "key": "ganymede",
+      "name": "Ganymede",
+      "texture": "/textures/moons/ganymede.jpg"
+    },
+    {
+      "key": "callisto",
+      "name": "Callisto",
+      "texture": "/textures/moons/callisto.jpg"
+    }
+  ],
+  "saturn": [
+    {
+      "key": "titan",
+      "name": "Titan",
+      "texture": "/textures/moons/titan.jpg"
+    },
+    {
+      "key": "enceladus",
+      "name": "Enceladus",
+      "texture": "/textures/moons/enceladus.jpg"
+    }
+  ],
+  "uranus": [
+    {
+      "key": "titania",
+      "name": "Titania",
+      "texture": "/textures/moons/titania.jpg"
+    },
+    {
+      "key": "oberon",
+      "name": "Oberon",
+      "texture": "/textures/moons/oberon.jpg"
+    }
+  ],
+  "neptune": [
+    {
+      "key": "triton",
+      "name": "Triton",
+      "texture": "/textures/moons/triton.jpg"
+    }
+  ],
+  "pluto": [
+    {
+      "key": "charon",
+      "name": "Charon",
+      "texture": "/textures/moons/charon.jpg"
+    }
+  ]
+}

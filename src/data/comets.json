@@ -1,0 +1,24 @@
+[
+  {
+    "key": "halley",
+    "name": "Halley's Comet",
+    "semiMajorAxis": 60,
+    "eccentricity": 0.967,
+    "inclination": 15,
+    "speed": 0.015,
+    "bodyRadius": 0.15,
+    "color": "#E8F4FD",
+    "maxTailLength": 5
+  },
+  {
+    "key": "hale-bopp",
+    "name": "Comet Hale-Bopp",
+    "semiMajorAxis": 80,
+    "eccentricity": 0.95,
+    "inclination": 20,
+    "speed": 0.01,
+    "bodyRadius": 0.15,
+    "color": "#E8F4FD",
+    "maxTailLength": 5
+  }
+]
