@@ -26,4 +26,33 @@ function threeShimPlugin() {
 
 export default defineConfig({
   plugins: [react(), threeShimPlugin()],
+
+  // Relative asset paths for iframe embedding and static hosting
+  base: './',
+
+  build: {
+    // Split Three.js into its own chunk for better caching
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          three: ['three'],
+          'react-three': ['@react-three/fiber', '@react-three/drei'],
+        },
+      },
+    },
+  },
+
+  // Development server headers
+  server: {
+    headers: {
+      'Content-Security-Policy': "frame-ancestors 'self' https://rohitgarrg.com https://*.rohitgarrg.com",
+    },
+  },
+
+  // Preview server headers (npm run preview)
+  preview: {
+    headers: {
+      'Content-Security-Policy': "frame-ancestors 'self' https://rohitgarrg.com https://*.rohitgarrg.com",
+    },
+  },
 })
