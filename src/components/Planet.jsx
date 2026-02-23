@@ -1,4 +1,4 @@
-import { useRef, useState, useCallback, useMemo, Suspense, Component } from 'react'
+import { useRef, useState, useCallback, useMemo, memo, Suspense, Component } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { useTexture, Html } from '@react-three/drei'
 import * as THREE from 'three'
@@ -43,6 +43,9 @@ class TextureErrorBoundary extends Component {
     return this.props.children
   }
 }
+
+// Sphere segment counts by quality level
+const SEGMENTS_BY_QUALITY = { high: 64, medium: 32, low: 16 }
 
 /**
  * TexturedSphere -- loads a texture via useTexture (drei) and applies it
@@ -112,7 +115,7 @@ function SaturnRing() {
  * Rotates independently (cloudRotMult * base rotation speed).
  * Goes inside the spin group so it rotates with the planet body.
  */
-function CloudLayer({ radius, cloudRadiusScale, opacity, color, rotSpeed, cloudRotMult = 1 }) {
+function CloudLayer({ radius, cloudRadiusScale, opacity, color, rotSpeed, cloudRotMult = 1, segments = 64 }) {
   const cloudRef = useRef()
   const cloudRadius = radius * cloudRadiusScale
 
@@ -126,7 +129,7 @@ function CloudLayer({ radius, cloudRadiusScale, opacity, color, rotSpeed, cloudR
 
   return (
     <mesh ref={cloudRef}>
-      <sphereGeometry args={[cloudRadius, 64, 64]} />
+      <sphereGeometry args={[cloudRadius, segments, segments]} />
       <meshStandardMaterial
         color={color}
         transparent
@@ -162,7 +165,7 @@ const _compTarget = new THREE.Vector3()
  * Orbital animation: absolute time (orbSpeed * elapsedTime + initialAngle).
  * Self-rotation: delta-based, scaled by timeSpeed.
  */
-export default function Planet({ planetKey, initialAngle = 0 }) {
+function PlanetInner({ planetKey, initialAngle = 0 }) {
   const outerGroupRef = useRef()
   const offsetGroupRef = useRef()
   const spinGroupRef = useRef()
@@ -190,6 +193,10 @@ export default function Planet({ planetKey, initialAngle = 0 }) {
 
   // Does this planet have moons?
   const hasMoons = (moonsData[planetKey] || []).length > 0
+
+  // Quality-adapted sphere segments
+  const qualityLevel = useStore((s) => s.qualityLevel)
+  const segments = SEGMENTS_BY_QUALITY[qualityLevel] || 64
 
   // Size comparison lineup position for this planet
   const compPos = SIZE_COMPARISON_POSITIONS[planetKey]
@@ -271,7 +278,7 @@ export default function Planet({ planetKey, initialAngle = 0 }) {
   })
 
   // Build the fallback sphere (used as Suspense fallback and ErrorBoundary fallback)
-  const fallbackSphere = <FallbackSphere radius={radius} color={color} />
+  const fallbackSphere = <FallbackSphere radius={radius} color={color} segments={segments} />
 
   // Read comparison mode for conditional rendering
   const sizeComparisonMode = useStore((s) => s.sizeComparisonMode)
@@ -288,7 +295,7 @@ export default function Planet({ planetKey, initialAngle = 0 }) {
             <TextureErrorBoundary name={planetKey} fallback={fallbackSphere}>
               <Suspense fallback={fallbackSphere}>
                 {planetInfo.texture ? (
-                  <TexturedSphere radius={radius} texturePath={planetInfo.texture} />
+                  <TexturedSphere radius={radius} texturePath={planetInfo.texture} segments={segments} />
                 ) : (
                   fallbackSphere
                 )}
@@ -304,6 +311,7 @@ export default function Planet({ planetKey, initialAngle = 0 }) {
                 color="white"
                 rotSpeed={rotSpeed}
                 cloudRotMult={planetInfo.cloudRotationMultiplier || 1.1}
+                segments={segments}
               />
             )}
 
@@ -316,6 +324,7 @@ export default function Planet({ planetKey, initialAngle = 0 }) {
                 color="#F5F0D0"
                 rotSpeed={rotSpeed}
                 cloudRotMult={1}
+                segments={segments}
               />
             )}
           </group>
@@ -390,3 +399,6 @@ export default function Planet({ planetKey, initialAngle = 0 }) {
     </group>
   )
 }
+
+const Planet = memo(PlanetInner)
+export default Planet

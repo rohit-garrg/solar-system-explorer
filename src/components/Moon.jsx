@@ -1,9 +1,10 @@
-import { useRef, useCallback } from 'react'
+import { useRef, useCallback, memo } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { MOONS, getHitRadius } from '../utils/scaleConfig'
 import useStore from '../stores/useStore'
 
 const MOON_SELF_ROTATION = 0.02  // Slow self-spin for all moons
+const MOON_SEGMENTS = { high: 32, medium: 16, low: 8 }
 
 /**
  * Moon -- orbits its parent planet within the planet's tilt group.
@@ -21,7 +22,7 @@ const MOON_SELF_ROTATION = 0.02  // Slow self-spin for all moons
  *   moonKey       {string} -- key matching MOONS[key] in scaleConfig (e.g. "io")
  *   fallbackColor {string} -- hex color for the sphere
  */
-export default function Moon({ moonKey, fallbackColor = '#888888' }) {
+function MoonInner({ moonKey, fallbackColor = '#888888' }) {
   const orbitalRef = useRef()
   const meshRef = useRef()
 
@@ -29,6 +30,10 @@ export default function Moon({ moonKey, fallbackColor = '#888888' }) {
   if (!config) return null
 
   const { radius, orbitDistance, orbitSpeed } = config
+
+  // Quality-adapted segments
+  const qualityLevel = useStore((s) => s.qualityLevel)
+  const segments = MOON_SEGMENTS[qualityLevel] || 32
 
   // All moons are small -- always use expanded hit area
   const hitRadius = getHitRadius(radius)
@@ -73,7 +78,7 @@ export default function Moon({ moonKey, fallbackColor = '#888888' }) {
 
         {/* Moon sphere */}
         <mesh ref={meshRef}>
-          <sphereGeometry args={[radius, 32, 32]} />
+          <sphereGeometry args={[radius, segments, segments]} />
           <meshStandardMaterial color={fallbackColor} />
         </mesh>
 
@@ -92,3 +97,6 @@ export default function Moon({ moonKey, fallbackColor = '#888888' }) {
     </group>
   )
 }
+
+const Moon = memo(MoonInner)
+export default Moon

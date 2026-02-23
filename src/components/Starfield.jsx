@@ -3,10 +3,13 @@ import { useFrame, useThree } from '@react-three/fiber'
 import { Points, PointMaterial, Line, Html } from '@react-three/drei'
 import * as THREE from 'three'
 import constellationsData from '../data/constellations.json'
+import useStore from '../stores/useStore'
 
-const DIM_STAR_COUNT = 1800
-const BRIGHT_STAR_COUNT = 200
 const SPHERE_RADIUS = 490
+
+// Quality-adapted star counts: { high, medium, low }
+const DIM_COUNTS = { high: 1800, medium: 1000, low: 500 }
+const BRIGHT_COUNTS = { high: 200, medium: 100, low: 50 }
 
 /**
  * Generate random star positions on a sphere.
@@ -27,13 +30,16 @@ function generateStarPositions(count, radiusBase) {
 }
 
 /**
- * DimStars -- 1800 small, steady background stars.
+ * DimStars -- small, steady background stars.
+ * Count adapts to quality level.
  */
 function DimStars() {
-  const positions = useMemo(() => generateStarPositions(DIM_STAR_COUNT, SPHERE_RADIUS), [])
+  const qualityLevel = useStore((s) => s.qualityLevel)
+  const count = DIM_COUNTS[qualityLevel] || DIM_COUNTS.high
+  const positions = useMemo(() => generateStarPositions(count, SPHERE_RADIUS), [count])
 
   return (
-    <Points positions={positions} frustumCulled={false}>
+    <Points key={count} positions={positions} frustumCulled={false}>
       <PointMaterial
         color="white"
         size={0.3}
@@ -47,19 +53,22 @@ function DimStars() {
 }
 
 /**
- * BrightStars -- 200 larger stars that twinkle.
+ * BrightStars -- larger stars that twinkle.
+ * Count adapts to quality level.
  * Twinkling is done by modulating the color buffer in useFrame.
  */
 function BrightStars() {
   const pointsRef = useRef()
+  const qualityLevel = useStore((s) => s.qualityLevel)
+  const count = BRIGHT_COUNTS[qualityLevel] || BRIGHT_COUNTS.high
 
   const { positions, phases, frequencies, baseColors } = useMemo(() => {
-    const pos = generateStarPositions(BRIGHT_STAR_COUNT, SPHERE_RADIUS * 0.98)
-    const ph = new Float32Array(BRIGHT_STAR_COUNT)
-    const freq = new Float32Array(BRIGHT_STAR_COUNT)
-    const colors = new Float32Array(BRIGHT_STAR_COUNT * 3)
+    const pos = generateStarPositions(count, SPHERE_RADIUS * 0.98)
+    const ph = new Float32Array(count)
+    const freq = new Float32Array(count)
+    const colors = new Float32Array(count * 3)
 
-    for (let i = 0; i < BRIGHT_STAR_COUNT; i++) {
+    for (let i = 0; i < count; i++) {
       ph[i] = Math.random() * Math.PI * 2
       freq[i] = 0.5 + Math.random() * 2.0 // Twinkle speed variety
 
@@ -89,7 +98,7 @@ function BrightStars() {
     }
 
     return { positions: pos, phases: ph, frequencies: freq, baseColors: colors }
-  }, [])
+  }, [count])
 
   // Animate color brightness for twinkle effect
   useFrame(({ clock }) => {
@@ -100,7 +109,7 @@ function BrightStars() {
     const colorArr = geom.attributes.color.array
     const t = clock.getElapsedTime()
 
-    for (let i = 0; i < BRIGHT_STAR_COUNT; i++) {
+    for (let i = 0; i < count; i++) {
       // Oscillate brightness between 0.4 and 1.0
       const brightness = 0.6 + 0.4 * Math.sin(t * frequencies[i] + phases[i])
       colorArr[i * 3]     = baseColors[i * 3] * brightness
@@ -115,17 +124,17 @@ function BrightStars() {
   const colors = useMemo(() => new Float32Array(baseColors), [baseColors])
 
   return (
-    <points ref={pointsRef} frustumCulled={false}>
+    <points key={count} ref={pointsRef} frustumCulled={false}>
       <bufferGeometry>
         <bufferAttribute
           attach="attributes-position"
-          count={BRIGHT_STAR_COUNT}
+          count={count}
           array={positions}
           itemSize={3}
         />
         <bufferAttribute
           attach="attributes-color"
-          count={BRIGHT_STAR_COUNT}
+          count={count}
           array={colors}
           itemSize={3}
         />

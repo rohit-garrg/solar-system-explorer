@@ -1,8 +1,11 @@
+import usePerformance from '../hooks/usePerformance'
+
 /**
- * Monitors FPS using a rolling average over 3 seconds.
- * Triggers quality adaptation when FPS drops below 30.
+ * PerformanceMonitor -- calls the FPS tracking hook and returns null.
+ * Must live inside <Canvas> (usePerformance uses useFrame).
+ * Automatically adjusts qualityLevel in the store based on FPS.
  */
 export default function PerformanceMonitor() {
-  // TODO: FPS sampling, quality level switching via store
+  usePerformance()
   return null
 }

@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, memo } from 'react'
 import * as THREE from 'three'
 
 const SEGMENTS = 128  // Number of points in the circle
@@ -14,7 +14,7 @@ const SEGMENTS = 128  // Number of points in the circle
  * Props:
  *   distance {number} — orbital radius in scene units (matches DISTANCES[key])
  */
-export default function OrbitLine({ distance }) {
+function OrbitLineInner({ distance }) {
   // Build the circle geometry once — useMemo prevents recreation on re-renders
   const geometry = useMemo(() => {
     const points = []
@@ -44,3 +44,6 @@ export default function OrbitLine({ distance }) {
     </lineLoop>
   )
 }
+
+const OrbitLine = memo(OrbitLineInner)
+export default OrbitLine

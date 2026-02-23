@@ -5,6 +5,8 @@ import { ellipticalOrbitPosition } from '../utils/orbitMath'
 import { getHitRadius } from '../utils/scaleConfig'
 import useStore from '../stores/useStore'
 
+// Comet tail is hidden at 'low' quality to save draw calls
+
 // Pre-allocate reusable objects outside useFrame to avoid GC pressure
 const _cometPos = new THREE.Vector3()
 const _tailDir = new THREE.Vector3()
@@ -41,6 +43,10 @@ export default function Comet({ cometData }) {
 
   // Hit area for tapping (bodyRadius is 0.15, well under 0.5)
   const hitRadius = getHitRadius(bodyRadius)
+
+  // Hide tail at low quality
+  const qualityLevel = useStore((s) => s.qualityLevel)
+  const showTail = qualityLevel !== 'low'
 
   const handleClick = useCallback((e) => {
     e.stopPropagation()
@@ -111,20 +117,22 @@ export default function Comet({ cometData }) {
         <meshBasicMaterial color={color} />
       </mesh>
 
-      {/* Comet tail -- cone pointing away from Sun */}
-      <group ref={tailRef}>
-        <mesh ref={tailMeshRef}>
-          <coneGeometry args={[0.5, 1, 8]} />
-          <meshBasicMaterial
-            color="#B0D8FF"
-            transparent
-            opacity={0.4}
-            blending={THREE.AdditiveBlending}
-            depthWrite={false}
-            side={THREE.DoubleSide}
-          />
-        </mesh>
-      </group>
+      {/* Comet tail -- cone pointing away from Sun (hidden at low quality) */}
+      {showTail && (
+        <group ref={tailRef}>
+          <mesh ref={tailMeshRef}>
+            <coneGeometry args={[0.5, 1, 8]} />
+            <meshBasicMaterial
+              color="#B0D8FF"
+              transparent
+              opacity={0.4}
+              blending={THREE.AdditiveBlending}
+              depthWrite={false}
+              side={THREE.DoubleSide}
+            />
+          </mesh>
+        </group>
+      )}
 
       {/* Invisible expanded hit area for clicking */}
       <mesh

@@ -18,9 +18,9 @@ const dummy = new THREE.Object3D()
 export default function AsteroidBelt() {
   const meshRef = useRef()
 
-  // Adapt count based on quality level
+  // Adapt count based on quality level: high=500, medium=200, low=100
   const qualityLevel = useStore((s) => s.qualityLevel)
-  const count = qualityLevel === 'low' ? ASTEROID_BELT.lowCount : ASTEROID_BELT.count
+  const count = qualityLevel === 'low' ? 100 : qualityLevel === 'medium' ? ASTEROID_BELT.lowCount : ASTEROID_BELT.count
 
   // Create the shared geometry once
   const geometry = useMemo(() => new THREE.IcosahedronGeometry(1, 0), [])

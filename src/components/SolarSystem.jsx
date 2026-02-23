@@ -7,6 +7,7 @@ import AsteroidBelt from './AsteroidBelt'
 import Comet from './Comet'
 import Spacecraft from './Spacecraft'
 import PostcardCaptureTrigger from './PostcardCaptureTrigger'
+import PerformanceMonitor from './PerformanceMonitor'
 import useStore from '../stores/useStore'
 import planetsData from '../data/planets.json'
 import cometsData from '../data/comets.json'
@@ -92,6 +93,9 @@ export default function SolarSystem() {
 
       {/* Postcard screenshot trigger (captures canvas on request) */}
       <PostcardCaptureTrigger />
+
+      {/* FPS monitoring -- adjusts qualityLevel in the store */}
+      <PerformanceMonitor />
     </group>
   )
 }
