@@ -2,11 +2,13 @@ import { Canvas } from '@react-three/fiber'
 import ErrorBoundary from './components/ErrorBoundary'
 import SolarSystem from './components/SolarSystem'
 import CameraController from './components/CameraController'
+import FactCard from './components/ui/FactCard'
+import BackButton from './components/ui/BackButton'
 import { CAMERA } from './utils/scaleConfig'
 
 /**
- * Root component — Canvas filling the full viewport, with ErrorBoundary wrapping
- * everything. UI overlays (FactCard, TimeSlider, etc.) are HTML siblings of the
+ * Root component -- Canvas filling the full viewport, with ErrorBoundary wrapping
+ * everything. UI overlays (FactCard, BackButton, etc.) are HTML siblings of the
  * Canvas, layered via absolute positioning.
  *
  * preserveDrawingBuffer is required for the postcard screenshot feature.
@@ -32,7 +34,7 @@ export default function App() {
             const canvas = gl.domElement
             canvas.addEventListener('webglcontextlost', (e) => {
               e.preventDefault()
-              console.warn('WebGL context lost — attempting recovery...')
+              console.warn('WebGL context lost -- attempting recovery...')
             })
             canvas.addEventListener('webglcontextrestored', () => {
               console.info('WebGL context restored.')
@@ -43,8 +45,9 @@ export default function App() {
           <CameraController />
         </Canvas>
 
-        {/* UI Overlays — HTML/CSS layered on top of 3D canvas */}
-        {/* TODO: FactCard, TimeSlider, ModeToggle, DiscoveryTracker, VolumeControl */}
+        {/* UI Overlays -- HTML/CSS layered on top of 3D canvas */}
+        <FactCard />
+        <BackButton />
       </div>
     </ErrorBoundary>
   )

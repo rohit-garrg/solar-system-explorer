@@ -147,5 +147,13 @@ export function getHitRadius(visualRadius) {
   return Math.max(visualRadius * HIT_RADIUS_MULTIPLIER, MIN_HIT_RADIUS)
 }
 
+// Spread planets evenly around their orbits at startup.
+// Exported here so it's the single source of truth (used by SolarSystem + orbitMath).
+const PLANET_ORDER = ['mercury', 'venus', 'earth', 'mars', 'jupiter', 'saturn', 'uranus', 'neptune', 'pluto']
+export const INITIAL_ANGLES = PLANET_ORDER.reduce((acc, key, i) => {
+  acc[key] = (i / PLANET_ORDER.length) * Math.PI * 2
+  return acc
+}, {})
+
 // Total explorable bodies (for discovery tracker)
 export const TOTAL_BODIES = 22

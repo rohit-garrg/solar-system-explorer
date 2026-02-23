@@ -5,7 +5,7 @@ import Planet from './Planet'
 import OrbitLine from './OrbitLine'
 import useStore from '../stores/useStore'
 import planetsData from '../data/planets.json'
-import { DISTANCES } from '../utils/scaleConfig'
+import { DISTANCES, INITIAL_ANGLES } from '../utils/scaleConfig'
 
 /**
  * Main 3D scene — renders all celestial bodies inside the R3F Canvas.
@@ -13,16 +13,9 @@ import { DISTANCES } from '../utils/scaleConfig'
  * TimeTicker is the ONLY place that advances elapsedTime in the Zustand store.
  * All other components read elapsedTime but never write it.
  *
- * Planets are spread at even initial angles so they're visible from the default
- * camera position at startup (prevents all 9 clustering on one side).
+ * INITIAL_ANGLES comes from scaleConfig (single source of truth) — spreads
+ * planets evenly so they're visible from the default camera at startup.
  */
-
-// Spread planets evenly around their orbits at startup
-const PLANET_KEYS = planetsData.map((p) => p.key)
-const INITIAL_ANGLES = PLANET_KEYS.reduce((acc, key, i) => {
-  acc[key] = (i / PLANET_KEYS.length) * Math.PI * 2
-  return acc
-}, {})
 
 /**
  * TimeTicker — advances the simulation's elapsedTime every frame.

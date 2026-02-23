@@ -123,3 +123,42 @@ export function degToRad(degrees) {
 export function lerp(start, end, t) {
   return start + (end - start) * t
 }
+
+/**
+ * Get a body's current world-space position given elapsed simulation time.
+ * Handles Sun (origin), planets (circular orbit), and moons (offset from parent).
+ *
+ * MOONS in scaleConfig is keyed by moon name, with a `parent` field.
+ * moons.json is keyed by parent planet.
+ */
+import { DISTANCES, ORBITAL_SPEEDS, MOONS, INITIAL_ANGLES } from './scaleConfig'
+
+export function getBodyWorldPosition(bodyKey, elapsedTime) {
+  // Sun is always at origin
+  if (bodyKey === 'sun') return [0, 0, 0]
+
+  // Planet — circular orbit around Sun
+  if (DISTANCES[bodyKey] !== undefined) {
+    const angle = ORBITAL_SPEEDS[bodyKey] * elapsedTime + (INITIAL_ANGLES[bodyKey] || 0)
+    return [
+      DISTANCES[bodyKey] * Math.cos(angle),
+      0,
+      DISTANCES[bodyKey] * Math.sin(angle),
+    ]
+  }
+
+  // Moon — offset from parent planet's position
+  if (MOONS[bodyKey]) {
+    const moon = MOONS[bodyKey]
+    const parentPos = getBodyWorldPosition(moon.parent, elapsedTime)
+    const moonAngle = moon.orbitSpeed * elapsedTime
+    return [
+      parentPos[0] + moon.orbitDistance * Math.cos(moonAngle),
+      parentPos[1],
+      parentPos[2] + moon.orbitDistance * Math.sin(moonAngle),
+    ]
+  }
+
+  // Fallback — unknown body
+  return [0, 0, 0]
+}
