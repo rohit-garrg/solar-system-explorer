@@ -24,3 +24,13 @@ Step 4: DONE - Orbital animation and orbit lines
 - Planet.jsx: orbital position = orbSpeed * elapsedTime + initialAngle (absolute time, no drift)
 - OrbitLine.jsx: BufferGeometry circle (128 segments), lineLoop, white opacity=0.15
 - SolarSystem.jsx: renders OrbitLine per planet at correct distance
+
+Step 5: DONE - Click to select + fact cards
+- INITIAL_ANGLES exported from scaleConfig.js (single source of truth, removed duplicate in SolarSystem)
+- getBodyWorldPosition() in orbitMath.js handles Sun (origin), planets (circular orbit), moons (parent offset)
+- useCameraAnimation hook: lerps camera position + OrbitControls target to selected body, tracks moving body each frame
+- CameraController.jsx: passes controlsRef to animation hook
+- Planet.jsx: onClick selects body, invisible hit areas for radius < 0.5, smooth hover scale 1.0->1.15
+- Sun.jsx: onClick selects 'sun', cursor pointer
+- FactCard.jsx: responsive (right panel desktop w-96, bottom sheet mobile), random starting fact, Next Fact button, stats grid, dismiss with slide-out animation
+- BackButton.jsx: fixed top-left, chevron icon, clears selection

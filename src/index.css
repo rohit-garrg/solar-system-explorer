@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Full-bleed canvas — no scrollbars, no margin */
+/* Full-bleed canvas -- no scrollbars, no margin */
 html, body, #root {
   margin: 0;
   padding: 0;
@@ -10,4 +10,44 @@ html, body, #root {
   height: 100%;
   overflow: hidden;
   background: #000;
+}
+
+/* Custom range slider thumb -- larger for touch targets */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+input[type="range"]::-webkit-slider-runnable-track {
+  height: 4px;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 2px;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: white;
+  margin-top: -8px;
+  border: none;
+}
+
+input[type="range"]::-moz-range-track {
+  height: 4px;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 2px;
+  border: none;
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: white;
+  border: none;
 }

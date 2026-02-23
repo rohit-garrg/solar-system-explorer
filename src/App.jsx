@@ -4,6 +4,7 @@ import SolarSystem from './components/SolarSystem'
 import CameraController from './components/CameraController'
 import FactCard from './components/ui/FactCard'
 import BackButton from './components/ui/BackButton'
+import TimeSlider from './components/ui/TimeSlider'
 import { CAMERA } from './utils/scaleConfig'
 
 /**
@@ -48,6 +49,7 @@ export default function App() {
         {/* UI Overlays -- HTML/CSS layered on top of 3D canvas */}
         <FactCard />
         <BackButton />
+        <TimeSlider />
       </div>
     </ErrorBoundary>
   )
