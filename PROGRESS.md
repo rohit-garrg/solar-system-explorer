@@ -65,3 +65,53 @@ Step 8: DONE - Moons with orbital animation and click interaction
 - Moons wrapped in group with ref for visibility optimization
 - Visibility check: every 30 frames, compare camera distance to planet, hide moons when far (distToCam > distance * 0.6)
 - useCameraAnimation already handles moons via getBodyWorldPosition() + Math.max(radius*6, 3) min focus
+
+Step 9: DONE - Asteroid Belt and Comets
+- AsteroidBelt.jsx: InstancedMesh with IcosahedronGeometry(1, 0), 500 rocks (200 in low quality)
+- Random position in torus radius 38-46, Y offset -1.5 to +1.5, random scale 0.03-0.12
+- Random gray-brown instanceColor (R:0.35-0.55, G:0.30-0.50, B:0.25-0.45)
+- Belt rotates at 0.002 rad/s using absolute time
+- Comet.jsx: elliptical orbit via Kepler's equation, sphere body (0.15r, icy blue-white #E8F4FD)
+- Cone tail pointing away from Sun, AdditiveBlending, tail length scales inversely with distance to Sun
+- Expanded hit areas for tap targets (hitRadius = 0.5)
+- Added Halley's Comet + Hale-Bopp facts to facts.json (5 kid-friendly facts each)
+- orbitMath.js: getBodyWorldPosition now handles comet keys via ellipticalOrbitPosition
+- SolarSystem.jsx: renders AsteroidBelt + Comet components
+
+Step 10: DONE - Spacecraft Mode
+- ModeToggle.jsx: rocket button (right side), blue=active, dark=inactive, toggles spacecraftMode
+- DiscoveryTracker.jsx: "N of 22 worlds" counter (bottom-left), progress bar, congrats overlay on completion
+- Spacecraft.jsx: rocket mesh (cone nose + cylinder body + box fins + engine glow sphere)
+- Quadratic bezier flight: start -> control (midpoint + 20Y arc) -> target, 3s duration, smoothstep easing
+- On arrival: selectBody(target), markVisited(target), clear flight state
+- Idle: follows selected body with offset, faces body
+- Module-level spacecraftPositionRef for camera to read
+- Planet/Moon/Sun click handlers: spacecraft mode sets flightTarget+isFlying instead of selectBody
+- useCameraAnimation.js: follows spacecraft in third-person during flight (offset 5,8,5), supports size comparison camera preset
+
+Step 11: DONE - Audio Integration
+- useAudio.js: full Howler wrapper for ambient loop, planet tones (loop per body), SFX (whoosh, arrive, click)
+- Graceful error handling for missing audio files (onloaderror silently degrades)
+- Tab visibility pause/resume via visibilitychange event
+- Volume control updates propagate to all active Howl instances
+- SoundEnableButton.jsx: "Turn on Sound" opt-in button with speaker icon (hides after click)
+- VolumeControl.jsx: mute/unmute toggle + hover slider (shows after audio enabled)
+- AudioManager.jsx: non-visual store subscriber -- audioEnabled -> ambient, selectedBody -> planet tones, isFlying -> SFX, masterVolume -> volume updates
+- FactCard.jsx: playSfx('click') on Next Fact
+
+Step 12: DONE - Constellations and Starfield Polish
+- constellations.json: 8 constellations (Big Dipper, Orion, Cassiopeia, Leo, Scorpius, Southern Cross, Canis Major, Cygnus) with star positions on sphere r=490 and line connections
+- Starfield.jsx refactored into DimStars (1800, size 0.3, steady) + BrightStars (200, size 1.0, twinkling via color buffer animation) + Constellations
+- Bright stars include colored varieties: blue-white (Sirius-like 5%), reddish (Betelgeuse-like 5%), yellow-white (Polaris-like 3%)
+- Twinkling: sin(time * freq + phase) modulates color brightness 0.4-1.0 per bright star
+- Constellation lines: Line from drei, white opacity 0.08, Html labels at centroids
+- Constellations only visible when camera distance > 100 from origin
+
+Step 13: DONE - Size Comparison Mode
+- scaleConfig.js: SIZE_COMPARISON_ORDER (largest to smallest), SIZE_COMPARISON_POSITIONS (auto-computed X lineup centered on 0), SIZE_VS_EARTH labels
+- SizeComparison.jsx: toggle button at top-center with scaling icon, clears selection on toggle
+- Planet.jsx: in comparison mode, lerps outerGroup rotation to 0 and offset position to lineup position, hides moons, keeps slow spin for visual interest
+- Html labels below each planet: name + "Nx Earth" with text shadow
+- useCameraAnimation.js: SIZE_COMP_POS [0, 10, 50] camera preset
+- SolarSystem.jsx: hides orbit lines, asteroid belt, comets in comparison mode; increases ambient light to 0.4
+- App.jsx: all UI components wired (FactCard, BackButton, TimeSlider, ModeToggle, DiscoveryTracker, SoundEnableButton, VolumeControl, SizeComparison, AudioManager)
