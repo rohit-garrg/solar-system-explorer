@@ -115,3 +115,39 @@ Step 13: DONE - Size Comparison Mode
 - useCameraAnimation.js: SIZE_COMP_POS [0, 10, 50] camera preset
 - SolarSystem.jsx: hides orbit lines, asteroid belt, comets in comparison mode; increases ambient light to 0.4
 - App.jsx: all UI components wired (FactCard, BackButton, TimeSlider, ModeToggle, DiscoveryTracker, SoundEnableButton, VolumeControl, SizeComparison, AudioManager)
+
+Step 14: DONE - Postcard from Space
+- useStore.js: added postcardDataUrl, capturePostcard flag, requestPostcardCapture/setPostcardDataUrl/clearPostcard actions
+- PostcardCaptureTrigger.jsx (inside Canvas): uses useThree() gl.domElement.toDataURL() on capturePostcard flag
+- PostcardCapture.jsx: camera icon button (fixed top-16 right-4), full-screen preview overlay with gold-framed image
+- Download via offscreen canvas composite: dark background + gold border + image + greeting text + watermark
+- Greeting text: "Greetings from {bodyName}!" or "Exploring the Solar System!" when no body selected
+
+Step 15: DONE - Performance Monitor
+- usePerformance.js: rolling 60-frame timestamp window, checks every 3s, hysteresis thresholds (<20->low, <30->medium, >50->high)
+- PerformanceMonitor.jsx: calls usePerformance(), returns null, wired into SolarSystem.jsx
+- Quality adaptation: AsteroidBelt (500/200/100), Starfield DimStars (1800/1000/500), BrightStars (200/100/50)
+- Planet sphere segments (64/32/16), Moon segments (32/16/8), Cloud layers adapt with planet
+- Comet tail hidden at 'low' quality
+- React.memo on Planet, Moon, OrbitLine for render optimization
+
+Step 16: DONE - Responsive Layout and Touch Polish
+- VolumeControl mute button: increased to 44x44px (w-11 h-11)
+- Range slider thumb: increased to 24px in index.css (webkit + moz)
+- DiscoveryTracker: bottom-16 md:bottom-4 to avoid TimeSlider overlap on mobile
+- FactCard close button: increased to 44x44px, Next Fact button minHeight 44
+- All interactive elements verified: min 44x44px touch targets, aria-labels
+
+Step 17: DONE - Final Polish
+- Planet name labels: Html from drei, y = radius + 0.8, visible when camera > 80 from origin, no selection, not comparing
+- Selected planet highlight ring: RingGeometry (1.3r to 1.5r), blue #4488FF, pulsing opacity via sin(time*3)
+- Loading screen: "Solar System Explorer" title + "Loading the universe..." subtitle, z-200, 1.5s visible then 1s fade
+- WebGL context loss handler: friendly overlay "The universe needs a moment...", z-300, reload button
+- App.jsx refactored with useState for loading/webglLost, useCallback for handlers
+
+Step 18: DONE - Build and Deployment
+- vite.config.js: base './' for relative asset paths, manualChunks splits three.js (674KB) and react-three (376KB)
+- CSP headers in server.headers and preview.headers
+- iframe-test.html: test page with embedded dist/index.html and manual checklist
+- README.md: features, tech stack, setup, textures, audio, iframe embedding, keyboard shortcuts, performance, architecture
+- Final build: 3 JS chunks (three 674KB, react-three 376KB, app 109KB) + CSS 12KB
