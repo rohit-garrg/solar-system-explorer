@@ -1,6 +1,6 @@
 import { useRef, useState, useCallback, useMemo, Suspense, Component } from 'react'
 import { useFrame } from '@react-three/fiber'
-import { useTexture } from '@react-three/drei'
+import { useTexture, Html } from '@react-three/drei'
 import * as THREE from 'three'
 import {
   RADII,
@@ -10,6 +10,8 @@ import {
   AXIAL_TILTS,
   FALLBACK_COLORS,
   SATURN_RING,
+  SIZE_COMPARISON_POSITIONS,
+  SIZE_VS_EARTH,
   getHitRadius,
 } from '../utils/scaleConfig'
 import { degToRad } from '../utils/orbitMath'
@@ -135,6 +137,9 @@ function CloudLayer({ radius, cloudRadiusScale, opacity, color, rotSpeed, cloudR
   )
 }
 
+// Pre-allocate a Vector3 for comparison mode lerping
+const _compTarget = new THREE.Vector3()
+
 /**
  * Planet -- renders a single planet using the scene graph hierarchy:
  *
@@ -148,11 +153,18 @@ function CloudLayer({ radius, cloudRadiusScale, opacity, color, rotSpeed, cloudR
  *         <hitMesh>        -- invisible expanded tap target
  *         {moons}          -- rendered here later (outside spin group)
  *
+ * In size comparison mode:
+ *   - outerGroup rotation lerps to 0 (no orbiting)
+ *   - offsetGroup position lerps to the lineup X position at Y=0, Z=0
+ *   - Moons are hidden
+ *   - Html label shows planet name + "Nx Earth"
+ *
  * Orbital animation: absolute time (orbSpeed * elapsedTime + initialAngle).
  * Self-rotation: delta-based, scaled by timeSpeed.
  */
 export default function Planet({ planetKey, initialAngle = 0 }) {
   const outerGroupRef = useRef()
+  const offsetGroupRef = useRef()
   const spinGroupRef = useRef()
   const moonsGroupRef = useRef()
   const frameCounter = useRef(0)
@@ -179,11 +191,15 @@ export default function Planet({ planetKey, initialAngle = 0 }) {
   // Does this planet have moons?
   const hasMoons = (moonsData[planetKey] || []).length > 0
 
+  // Size comparison lineup position for this planet
+  const compPos = SIZE_COMPARISON_POSITIONS[planetKey]
+  const sizeLabel = SIZE_VS_EARTH[planetKey]
+
   const handleClick = useCallback((e) => {
     e.stopPropagation()
     const store = useStore.getState()
+    if (store.sizeComparisonMode) return // No clicking in comparison mode
     if (store.spacecraftMode && !store.isFlying) {
-      // In spacecraft mode, clicking sends the spacecraft to this planet
       store.setFlightTarget(planetKey)
       store.setIsFlying(true)
     } else if (!store.spacecraftMode) {
@@ -203,44 +219,66 @@ export default function Planet({ planetKey, initialAngle = 0 }) {
   }, [])
 
   useFrame((state, delta) => {
-    if (!outerGroupRef.current || !spinGroupRef.current) return
+    if (!outerGroupRef.current || !spinGroupRef.current || !offsetGroupRef.current) return
 
-    const { elapsedTime, timeSpeed, isPaused } = useStore.getState()
+    const { elapsedTime, timeSpeed, isPaused, sizeComparisonMode } = useStore.getState()
 
-    // Orbital position -- absolute time, no drift
-    outerGroupRef.current.rotation.y = orbSpeed * elapsedTime + initialAngle
+    if (sizeComparisonMode) {
+      // Size comparison mode: lerp orbit rotation to 0, offset to lineup position
+      outerGroupRef.current.rotation.y += (0 - outerGroupRef.current.rotation.y) * 0.05
+      _compTarget.set(compPos.x, compPos.y, compPos.z)
+      offsetGroupRef.current.position.lerp(_compTarget, 0.05)
 
-    // Self-rotation -- delta-based, scaled by timeSpeed
-    if (!isPaused) {
-      spinGroupRef.current.rotation.y += rotSpeed * delta * timeSpeed
+      // Keep spinning slowly for visual interest
+      spinGroupRef.current.rotation.y += rotSpeed * delta * 0.3
+
+      // Hide moons in comparison mode
+      if (moonsGroupRef.current) {
+        moonsGroupRef.current.visible = false
+      }
+    } else {
+      // Normal orbit mode
+      // Orbital position -- absolute time, no drift
+      outerGroupRef.current.rotation.y = orbSpeed * elapsedTime + initialAngle
+
+      // Lerp offset position back to normal [distance, 0, 0]
+      _compTarget.set(distance, 0, 0)
+      offsetGroupRef.current.position.lerp(_compTarget, 0.05)
+
+      // Self-rotation -- delta-based, scaled by timeSpeed
+      if (!isPaused) {
+        spinGroupRef.current.rotation.y += rotSpeed * delta * timeSpeed
+      }
+
+      // Moon visibility optimization -- check every 30 frames
+      if (hasMoons && moonsGroupRef.current) {
+        moonsGroupRef.current.visible = true // Re-enable first
+        frameCounter.current++
+        if (frameCounter.current % 30 === 0) {
+          const camPos = state.camera.position
+          const planetWorldPos = new THREE.Vector3()
+          spinGroupRef.current.getWorldPosition(planetWorldPos)
+          const distToCam = camPos.distanceTo(planetWorldPos)
+          moonsGroupRef.current.visible = distToCam < distance * 0.6
+        }
+      }
     }
 
     // Smooth hover scale lerp (1.0 <-> 1.15)
     const targetScale = hovered ? 1.15 : 1
     hoverScale.current += (targetScale - hoverScale.current) * 0.1
     spinGroupRef.current.scale.setScalar(hoverScale.current)
-
-    // Moon visibility optimization -- check every 30 frames
-    if (hasMoons && moonsGroupRef.current) {
-      frameCounter.current++
-      if (frameCounter.current % 30 === 0) {
-        const camPos = state.camera.position
-        // Get planet's world position from the offset group
-        const planetWorldPos = new THREE.Vector3()
-        spinGroupRef.current.getWorldPosition(planetWorldPos)
-        const distToCam = camPos.distanceTo(planetWorldPos)
-        // Hide moons when camera is far from this planet
-        moonsGroupRef.current.visible = distToCam < distance * 0.6
-      }
-    }
   })
 
   // Build the fallback sphere (used as Suspense fallback and ErrorBoundary fallback)
   const fallbackSphere = <FallbackSphere radius={radius} color={color} />
 
+  // Read comparison mode for conditional rendering
+  const sizeComparisonMode = useStore((s) => s.sizeComparisonMode)
+
   return (
     <group ref={outerGroupRef}>
-      <group position={[distance, 0, 0]}>
+      <group ref={offsetGroupRef} position={[distance, 0, 0]}>
         <group rotation={[0, 0, tiltRad]}>
 
           {/* Spin group -- self-rotation applied here. Contains planet mesh + clouds. */}
@@ -320,6 +358,31 @@ export default function Planet({ planetKey, initialAngle = 0 }) {
                 />
               ))}
             </group>
+          )}
+
+          {/* Size comparison label -- only in comparison mode */}
+          {sizeComparisonMode && (
+            <Html
+              position={[0, -(radius + 1.5), 0]}
+              center
+              style={{
+                color: 'white',
+                fontSize: '11px',
+                fontFamily: 'system-ui, sans-serif',
+                textAlign: 'center',
+                whiteSpace: 'nowrap',
+                pointerEvents: 'none',
+                userSelect: 'none',
+                textShadow: '0 1px 3px rgba(0,0,0,0.8)',
+              }}
+            >
+              <div style={{ fontWeight: 'bold', marginBottom: '2px' }}>
+                {planetInfo.name || planetKey}
+              </div>
+              <div style={{ opacity: 0.7, fontSize: '10px' }}>
+                {sizeLabel}
+              </div>
+            </Html>
           )}
 
         </group>

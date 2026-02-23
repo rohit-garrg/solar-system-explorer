@@ -9,6 +9,7 @@ import ModeToggle from './components/ui/ModeToggle'
 import DiscoveryTracker from './components/ui/DiscoveryTracker'
 import SoundEnableButton from './components/ui/SoundEnableButton'
 import VolumeControl from './components/ui/VolumeControl'
+import SizeComparison from './components/ui/SizeComparison'
 import AudioManager from './components/AudioManager'
 import { CAMERA } from './utils/scaleConfig'
 
@@ -59,6 +60,7 @@ export default function App() {
         <DiscoveryTracker />
         <SoundEnableButton />
         <VolumeControl />
+        <SizeComparison />
         <AudioManager />
       </div>
     </ErrorBoundary>

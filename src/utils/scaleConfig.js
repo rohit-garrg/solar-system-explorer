@@ -157,3 +157,46 @@ export const INITIAL_ANGLES = PLANET_ORDER.reduce((acc, key, i) => {
 
 // Total explorable bodies (for discovery tracker)
 export const TOTAL_BODIES = 22
+
+// Size comparison mode: planets ordered largest to smallest
+export const SIZE_COMPARISON_ORDER = [
+  'jupiter', 'saturn', 'uranus', 'neptune', 'earth', 'venus', 'mars', 'mercury', 'pluto',
+]
+
+// Compute X positions for size comparison lineup.
+// Planets spaced so they don't overlap, with padding between them.
+// Centered around X=0 for the camera preset [0, 10, 50].
+const SIZE_COMP_PADDING = 1.5
+export const SIZE_COMPARISON_POSITIONS = (() => {
+  const positions = {}
+  let x = -20 // Start position (left side)
+
+  for (const key of SIZE_COMPARISON_ORDER) {
+    const r = RADII[key]
+    x += r // Move in by radius
+    positions[key] = { x, y: 0, z: 0 }
+    x += r + SIZE_COMP_PADDING // Move past radius + gap
+  }
+
+  // Center the lineup around X=0
+  const totalWidth = x + 20 // Approximate total width
+  const centerOffset = (x - RADII[SIZE_COMPARISON_ORDER[0]]) / 2
+  for (const key of SIZE_COMPARISON_ORDER) {
+    positions[key].x -= centerOffset
+  }
+
+  return positions
+})()
+
+// Size labels: how many Earths wide
+export const SIZE_VS_EARTH = {
+  jupiter: '11x Earth',
+  saturn: '9x Earth',
+  uranus: '4x Earth',
+  neptune: '4x Earth',
+  earth: '1x (Earth)',
+  venus: '0.95x Earth',
+  mars: '0.53x Earth',
+  mercury: '0.38x Earth',
+  pluto: '0.18x Earth',
+}
