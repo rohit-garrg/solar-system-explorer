@@ -1,24 +1,31 @@
 import { Canvas } from '@react-three/fiber'
 import ErrorBoundary from './components/ErrorBoundary'
 import SolarSystem from './components/SolarSystem'
+import CameraController from './components/CameraController'
 import { CAMERA } from './utils/scaleConfig'
 
 /**
- * Root component — Canvas with ErrorBoundary + UI overlay container.
+ * Root component — Canvas filling the full viewport, with ErrorBoundary wrapping
+ * everything. UI overlays (FactCard, TimeSlider, etc.) are HTML siblings of the
+ * Canvas, layered via absolute positioning.
+ *
  * preserveDrawingBuffer is required for the postcard screenshot feature.
+ * alpha: false gives a solid black background (faster than transparent canvas).
  */
 export default function App() {
   return (
     <ErrorBoundary>
-      <div className="w-full h-full relative">
+      {/* Full-screen container */}
+      <div style={{ width: '100vw', height: '100vh', position: 'relative', background: '#000' }}>
+
         {/* 3D Canvas */}
         <Canvas
-          gl={{ preserveDrawingBuffer: true, antialias: true }}
+          gl={{ preserveDrawingBuffer: true, antialias: true, alpha: false }}
           camera={{
             position: CAMERA.defaultPosition,
+            fov: 45,
             near: CAMERA.near,
             far: CAMERA.far,
-            fov: 50,
           }}
           onCreated={({ gl }) => {
             // Handle WebGL context loss gracefully
@@ -33,10 +40,11 @@ export default function App() {
           }}
         >
           <SolarSystem />
+          <CameraController />
         </Canvas>
 
-        {/* UI Overlays (HTML on top of Canvas) */}
-        {/* TODO: Add FactCard, TimeSlider, ModeToggle, etc. */}
+        {/* UI Overlays — HTML/CSS layered on top of 3D canvas */}
+        {/* TODO: FactCard, TimeSlider, ModeToggle, DiscoveryTracker, VolumeControl */}
       </div>
     </ErrorBoundary>
   )
