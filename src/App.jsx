@@ -1,3 +1,4 @@
+import { useState, useEffect, useCallback } from 'react'
 import { Canvas } from '@react-three/fiber'
 import ErrorBoundary from './components/ErrorBoundary'
 import SolarSystem from './components/SolarSystem'
@@ -19,10 +20,47 @@ import { CAMERA } from './utils/scaleConfig'
  * everything. UI overlays (FactCard, BackButton, etc.) are HTML siblings of the
  * Canvas, layered via absolute positioning.
  *
+ * Loading screen shows "Solar System Explorer" for 1.5s then fades out.
+ * WebGL context loss shows a friendly overlay with a reload button.
+ *
  * preserveDrawingBuffer is required for the postcard screenshot feature.
  * alpha: false gives a solid black background (faster than transparent canvas).
  */
 export default function App() {
+  // Loading screen state
+  const [showLoading, setShowLoading] = useState(true)
+  const [loadingFade, setLoadingFade] = useState(false)
+
+  // WebGL context loss state
+  const [webglLost, setWebglLost] = useState(false)
+
+  // Loading screen: visible for 1.5s, then fade out over 1s, then remove
+  useEffect(() => {
+    const fadeTimer = setTimeout(() => setLoadingFade(true), 1500)
+    const removeTimer = setTimeout(() => setShowLoading(false), 2500)
+    return () => {
+      clearTimeout(fadeTimer)
+      clearTimeout(removeTimer)
+    }
+  }, [])
+
+  const handleReload = useCallback(() => {
+    window.location.reload()
+  }, [])
+
+  const handleCanvasCreated = useCallback(({ gl }) => {
+    const canvas = gl.domElement
+    canvas.addEventListener('webglcontextlost', (e) => {
+      e.preventDefault()
+      console.warn('WebGL context lost -- attempting recovery...')
+      setWebglLost(true)
+    })
+    canvas.addEventListener('webglcontextrestored', () => {
+      console.info('WebGL context restored.')
+      setWebglLost(false)
+    })
+  }, [])
+
   return (
     <ErrorBoundary>
       {/* Full-screen container */}
@@ -37,17 +75,7 @@ export default function App() {
             near: CAMERA.near,
             far: CAMERA.far,
           }}
-          onCreated={({ gl }) => {
-            // Handle WebGL context loss gracefully
-            const canvas = gl.domElement
-            canvas.addEventListener('webglcontextlost', (e) => {
-              e.preventDefault()
-              console.warn('WebGL context lost -- attempting recovery...')
-            })
-            canvas.addEventListener('webglcontextrestored', () => {
-              console.info('WebGL context restored.')
-            })
-          }}
+          onCreated={handleCanvasCreated}
         >
           <SolarSystem />
           <CameraController />
@@ -64,6 +92,44 @@ export default function App() {
         <SizeComparison />
         <PostcardCapture />
         <AudioManager />
+
+        {/* Loading screen -- z-200, fades after 1.5s */}
+        {showLoading && (
+          <div
+            className="fixed inset-0 flex flex-col items-center justify-center bg-black text-white transition-opacity duration-1000"
+            style={{
+              zIndex: 200,
+              opacity: loadingFade ? 0 : 1,
+              pointerEvents: loadingFade ? 'none' : 'auto',
+            }}
+          >
+            <h1 className="text-4xl md:text-5xl font-bold mb-4 tracking-tight">
+              Solar System Explorer
+            </h1>
+            <p className="text-white/50 text-lg">
+              Loading the universe...
+            </p>
+          </div>
+        )}
+
+        {/* WebGL context loss overlay -- z-300 (highest) */}
+        {webglLost && (
+          <div
+            className="fixed inset-0 flex flex-col items-center justify-center bg-black/90 backdrop-blur-md text-white text-center p-8"
+            style={{ zIndex: 300 }}
+          >
+            <p className="text-2xl mb-2">The universe needs a moment...</p>
+            <p className="text-white/60 mb-6">The 3D graphics context was lost. This sometimes happens on mobile devices.</p>
+            <button
+              onClick={handleReload}
+              className="px-6 py-3 bg-blue-600 rounded-lg text-lg hover:bg-blue-500 transition-colors"
+              style={{ minWidth: 44, minHeight: 44 }}
+              aria-label="Reload the page"
+            >
+              Reload
+            </button>
+          </div>
+        )}
       </div>
     </ErrorBoundary>
   )

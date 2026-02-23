@@ -170,9 +170,11 @@ function PlanetInner({ planetKey, initialAngle = 0 }) {
   const offsetGroupRef = useRef()
   const spinGroupRef = useRef()
   const moonsGroupRef = useRef()
+  const highlightRef = useRef()
   const frameCounter = useRef(0)
 
   const [hovered, setHovered] = useState(false)
+  const [showLabel, setShowLabel] = useState(false)
   const hoverScale = useRef(1)
 
   const radius   = RADII[planetKey]
@@ -275,6 +277,24 @@ function PlanetInner({ planetKey, initialAngle = 0 }) {
     const targetScale = hovered ? 1.15 : 1
     hoverScale.current += (targetScale - hoverScale.current) * 0.1
     spinGroupRef.current.scale.setScalar(hoverScale.current)
+
+    // Label visibility check (every 30 frames, reuse frameCounter)
+    const { selectedBody } = useStore.getState()
+    if (frameCounter.current % 30 === 0) {
+      const camDist = state.camera.position.length()
+      const shouldShowLabel = camDist > 80 && !selectedBody && !sizeComparisonMode
+      setShowLabel(shouldShowLabel)
+    }
+
+    // Pulsing highlight ring when this planet is selected
+    if (highlightRef.current) {
+      const isSelected = selectedBody === planetKey
+      highlightRef.current.visible = isSelected && !sizeComparisonMode
+      if (isSelected) {
+        const t = state.clock.getElapsedTime()
+        highlightRef.current.material.opacity = 0.3 + 0.5 * (0.5 + 0.5 * Math.sin(t * 3))
+      }
+    }
   })
 
   // Build the fallback sphere (used as Suspense fallback and ErrorBoundary fallback)
@@ -393,6 +413,42 @@ function PlanetInner({ planetKey, initialAngle = 0 }) {
               </div>
             </Html>
           )}
+
+          {/* Planet name label -- visible when camera is far, no selection, not comparing */}
+          {showLabel && (
+            <Html
+              position={[0, radius + 0.8, 0]}
+              center
+              style={{
+                color: 'white',
+                fontSize: '10px',
+                fontFamily: 'system-ui, sans-serif',
+                opacity: 0.6,
+                whiteSpace: 'nowrap',
+                pointerEvents: 'none',
+                userSelect: 'none',
+                textShadow: '0 1px 4px rgba(0,0,0,0.9)',
+              }}
+            >
+              {planetInfo.name || planetKey}
+            </Html>
+          )}
+
+          {/* Selected planet highlight ring -- pulsing blue */}
+          <mesh
+            ref={highlightRef}
+            visible={false}
+            rotation={[-Math.PI / 2, 0, 0]}
+          >
+            <ringGeometry args={[radius * 1.3, radius * 1.5, 64]} />
+            <meshBasicMaterial
+              color="#4488FF"
+              transparent
+              opacity={0.5}
+              side={THREE.DoubleSide}
+              depthWrite={false}
+            />
+          </mesh>
 
         </group>
       </group>
