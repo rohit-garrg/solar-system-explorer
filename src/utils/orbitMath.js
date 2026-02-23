@@ -132,6 +132,11 @@ export function lerp(start, end, t) {
  * moons.json is keyed by parent planet.
  */
 import { DISTANCES, ORBITAL_SPEEDS, MOONS, INITIAL_ANGLES } from './scaleConfig'
+import cometsData from '../data/comets.json'
+
+// Build a lookup map for comet data by key
+const cometsByKey = {}
+cometsData.forEach((c) => { cometsByKey[c.key] = c })
 
 export function getBodyWorldPosition(bodyKey, elapsedTime) {
   // Sun is always at origin
@@ -157,6 +162,19 @@ export function getBodyWorldPosition(bodyKey, elapsedTime) {
       parentPos[1],
       parentPos[2] + moon.orbitDistance * Math.sin(moonAngle),
     ]
+  }
+
+  // Comet — elliptical orbit
+  if (cometsByKey[bodyKey]) {
+    const c = cometsByKey[bodyKey]
+    return ellipticalOrbitPosition(
+      c.semiMajorAxis,
+      c.eccentricity,
+      c.speed,
+      elapsedTime,
+      c.inclination,
+      0,
+    )
   }
 
   // Fallback — unknown body

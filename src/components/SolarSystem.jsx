@@ -3,8 +3,11 @@ import Sun from './Sun'
 import Starfield from './Starfield'
 import Planet from './Planet'
 import OrbitLine from './OrbitLine'
+import AsteroidBelt from './AsteroidBelt'
+import Comet from './Comet'
 import useStore from '../stores/useStore'
 import planetsData from '../data/planets.json'
+import cometsData from '../data/comets.json'
 import { DISTANCES, INITIAL_ANGLES } from '../utils/scaleConfig'
 
 /**
@@ -62,6 +65,14 @@ export default function SolarSystem() {
           planetKey={planet.key}
           initialAngle={INITIAL_ANGLES[planet.key]}
         />
+      ))}
+
+      {/* Asteroid belt -- torus of small rocks between Mars and Jupiter */}
+      <AsteroidBelt />
+
+      {/* Comets -- elliptical orbits with glowing tails */}
+      {cometsData.map((comet) => (
+        <Comet key={comet.key} cometData={comet} />
       ))}
 
       {/* Advance simulation time each frame */}

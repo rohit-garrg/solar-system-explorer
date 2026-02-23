@@ -424,5 +424,39 @@
       "Charon has a huge canyon that's longer and deeper than the Grand Canyon on Earth!",
       "Charon is named after the ferryman in Greek myths who carried souls across the river to the underworld. Fitting for Pluto's biggest moon!"
     ]
+  },
+  "halley": {
+    "name": "Halley's Comet",
+    "stats": {
+      "sizeVsEarth": "Tiny! About 7 miles long",
+      "orbitPeriod": "About 75 years",
+      "speed": "Over 150,000 miles per hour near the Sun",
+      "lastSeen": "1986",
+      "nextVisit": "2061"
+    },
+    "facts": [
+      "Halley's Comet visits us about every 75 years! Your great-great-grandparents might have seen it, and you might see it in 2061!",
+      "Comets are like giant dirty snowballs made of ice, dust, and rock. When they get close to the Sun, the ice melts and makes a glowing tail!",
+      "Halley's Comet's tail can stretch for millions of miles! But the comet itself is only about as wide as a small city.",
+      "People have been watching Halley's Comet for over 2,000 years! Ancient people sometimes thought comets were bad luck, but they're just space snowballs.",
+      "When Halley's Comet passes by, it leaves behind tiny bits of dust. When Earth flies through that dust, we see shooting stars called the Orionid meteor shower!"
+    ]
+  },
+  "hale-bopp": {
+    "name": "Comet Hale-Bopp",
+    "stats": {
+      "sizeVsEarth": "Huge for a comet! About 25 miles across",
+      "orbitPeriod": "About 2,500 years",
+      "speed": "Over 100,000 miles per hour",
+      "lastSeen": "1997",
+      "nextVisit": "Around year 4530"
+    },
+    "facts": [
+      "Comet Hale-Bopp was so bright in 1997 that you could see it with just your eyes, even from cities! It was called the Great Comet.",
+      "Hale-Bopp won't come back for about 2,500 years! The last time it visited before 1997, the ancient Egyptians were building pyramids!",
+      "Two people discovered Hale-Bopp on the same night without knowing each other! Alan Hale and Thomas Bopp both spotted it, so it got both their names.",
+      "Hale-Bopp is one of the biggest comets ever seen. It's about 25 miles across, which is much bigger than most comets!",
+      "Hale-Bopp actually has two tails! One is made of dust (white) and one is made of gas (blue). Both tails always point away from the Sun."
+    ]
   }
 }
