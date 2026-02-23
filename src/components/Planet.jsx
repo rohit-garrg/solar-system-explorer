@@ -15,6 +15,8 @@ import {
 import { degToRad } from '../utils/orbitMath'
 import useStore from '../stores/useStore'
 import planetsData from '../data/planets.json'
+import moonsData from '../data/moons.json'
+import Moon from './Moon'
 
 /**
  * TextureErrorBoundary -- catches texture load failures so the planet
@@ -152,6 +154,8 @@ function CloudLayer({ radius, cloudRadiusScale, opacity, color, rotSpeed, cloudR
 export default function Planet({ planetKey, initialAngle = 0 }) {
   const outerGroupRef = useRef()
   const spinGroupRef = useRef()
+  const moonsGroupRef = useRef()
+  const frameCounter = useRef(0)
 
   const [hovered, setHovered] = useState(false)
   const hoverScale = useRef(1)
@@ -172,6 +176,9 @@ export default function Planet({ planetKey, initialAngle = 0 }) {
   const hitRadius = getHitRadius(radius)
   const needsHitArea = hitRadius > radius
 
+  // Does this planet have moons?
+  const hasMoons = (moonsData[planetKey] || []).length > 0
+
   const handleClick = useCallback((e) => {
     e.stopPropagation()
     useStore.getState().selectBody(planetKey)
@@ -188,7 +195,7 @@ export default function Planet({ planetKey, initialAngle = 0 }) {
     document.body.style.cursor = 'auto'
   }, [])
 
-  useFrame((_, delta) => {
+  useFrame((state, delta) => {
     if (!outerGroupRef.current || !spinGroupRef.current) return
 
     const { elapsedTime, timeSpeed, isPaused } = useStore.getState()
@@ -205,6 +212,20 @@ export default function Planet({ planetKey, initialAngle = 0 }) {
     const targetScale = hovered ? 1.15 : 1
     hoverScale.current += (targetScale - hoverScale.current) * 0.1
     spinGroupRef.current.scale.setScalar(hoverScale.current)
+
+    // Moon visibility optimization -- check every 30 frames
+    if (hasMoons && moonsGroupRef.current) {
+      frameCounter.current++
+      if (frameCounter.current % 30 === 0) {
+        const camPos = state.camera.position
+        // Get planet's world position from the offset group
+        const planetWorldPos = new THREE.Vector3()
+        spinGroupRef.current.getWorldPosition(planetWorldPos)
+        const distToCam = camPos.distanceTo(planetWorldPos)
+        // Hide moons when camera is far from this planet
+        moonsGroupRef.current.visible = distToCam < distance * 0.6
+      }
+    }
   })
 
   // Build the fallback sphere (used as Suspense fallback and ErrorBoundary fallback)
@@ -281,7 +302,18 @@ export default function Planet({ planetKey, initialAngle = 0 }) {
             <meshBasicMaterial transparent opacity={0} />
           </mesh>
 
-          {/* Moons will be rendered here in Step 8 (inside tilt group, outside spin group) */}
+          {/* Moons -- inside tilt group, OUTSIDE spin group (don't rotate with planet) */}
+          {hasMoons && (
+            <group ref={moonsGroupRef}>
+              {(moonsData[planetKey]).map((m) => (
+                <Moon
+                  key={m.key}
+                  moonKey={m.key}
+                  fallbackColor={m.fallbackColor || '#888888'}
+                />
+              ))}
+            </group>
+          )}
 
         </group>
       </group>

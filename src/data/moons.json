@@ -3,79 +3,92 @@
     {
       "key": "moon",
       "name": "The Moon",
-      "texture": "/textures/moons/moon.jpg"
+      "texture": "/textures/moons/moon.jpg",
+      "fallbackColor": "#888888"
     }
   ],
   "mars": [
     {
       "key": "phobos",
       "name": "Phobos",
-      "texture": "/textures/moons/phobos.jpg"
+      "texture": "/textures/moons/phobos.jpg",
+      "fallbackColor": "#7A7267"
     },
     {
       "key": "deimos",
       "name": "Deimos",
-      "texture": "/textures/moons/deimos.jpg"
+      "texture": "/textures/moons/deimos.jpg",
+      "fallbackColor": "#8A7E6E"
     }
   ],
   "jupiter": [
     {
       "key": "io",
       "name": "Io",
-      "texture": "/textures/moons/io.jpg"
+      "texture": "/textures/moons/io.jpg",
+      "fallbackColor": "#C4A832"
     },
     {
       "key": "europa",
       "name": "Europa",
-      "texture": "/textures/moons/europa.jpg"
+      "texture": "/textures/moons/europa.jpg",
+      "fallbackColor": "#A0937E"
     },
     {
       "key": "ganymede",
       "name": "Ganymede",
-      "texture": "/textures/moons/ganymede.jpg"
+      "texture": "/textures/moons/ganymede.jpg",
+      "fallbackColor": "#8C8478"
     },
     {
       "key": "callisto",
       "name": "Callisto",
-      "texture": "/textures/moons/callisto.jpg"
+      "texture": "/textures/moons/callisto.jpg",
+      "fallbackColor": "#5C5550"
     }
   ],
   "saturn": [
     {
       "key": "titan",
       "name": "Titan",
-      "texture": "/textures/moons/titan.jpg"
+      "texture": "/textures/moons/titan.jpg",
+      "fallbackColor": "#C4A040"
     },
     {
       "key": "enceladus",
       "name": "Enceladus",
-      "texture": "/textures/moons/enceladus.jpg"
+      "texture": "/textures/moons/enceladus.jpg",
+      "fallbackColor": "#E8E8E8"
     }
   ],
   "uranus": [
     {
       "key": "titania",
       "name": "Titania",
-      "texture": "/textures/moons/titania.jpg"
+      "texture": "/textures/moons/titania.jpg",
+      "fallbackColor": "#9A9090"
     },
     {
       "key": "oberon",
       "name": "Oberon",
-      "texture": "/textures/moons/oberon.jpg"
+      "texture": "/textures/moons/oberon.jpg",
+      "fallbackColor": "#8A8080"
     }
   ],
   "neptune": [
     {
       "key": "triton",
       "name": "Triton",
-      "texture": "/textures/moons/triton.jpg"
+      "texture": "/textures/moons/triton.jpg",
+      "fallbackColor": "#B0A8A0"
     }
   ],
   "pluto": [
     {
       "key": "charon",
       "name": "Charon",
-      "texture": "/textures/moons/charon.jpg"
+      "texture": "/textures/moons/charon.jpg",
+      "fallbackColor": "#808080"
     }
   ]
 }

@@ -42,3 +42,15 @@ Step 6: DONE - Time controls
 - Keyboard shortcuts: Space=pause (preventDefault), ArrowUp/Down=speed +/-1
 - Uses useStore.getState() in keydown handler to avoid stale closures
 - "FAST" pulse indicator when speed > 5x
+
+Step 7: DONE - Textures with graceful fallbacks
+- TextureErrorBoundary class component catches texture load failures, renders fallback color
+- Planet.jsx refactored: spinGroup ref for self-rotation, wraps planet mesh + cloud layers
+- TexturedSphere: uses drei useTexture(), wrapped in Suspense + TextureErrorBoundary
+- FallbackSphere: simple colored sphere (used as both Suspense and ErrorBoundary fallback)
+- SaturnRing: RingGeometry(2.2, 3.8, 64), UV fix for linear radial mapping, DoubleSide, rotated -PI/2 to XZ plane
+- Earth CloudLayer: radius*1.02, white, opacity 0.4, depthWrite false, 1.1x rotation multiplier
+- Venus CloudLayer: radius*1.03, #F5F0D0, opacity 0.7, depthWrite false
+- Sun.jsx: SunTextureBoundary + Suspense, MeshBasicMaterial (self-lit, not Standard)
+- Invisible click meshes for reliable pointer events on both planets and Sun
+- All textures gracefully degrade to fallback colors when files are missing
