@@ -5,6 +5,7 @@ import Planet from './Planet'
 import OrbitLine from './OrbitLine'
 import AsteroidBelt from './AsteroidBelt'
 import Comet from './Comet'
+import Spacecraft from './Spacecraft'
 import useStore from '../stores/useStore'
 import planetsData from '../data/planets.json'
 import cometsData from '../data/comets.json'
@@ -74,6 +75,9 @@ export default function SolarSystem() {
       {cometsData.map((comet) => (
         <Comet key={comet.key} cometData={comet} />
       ))}
+
+      {/* Spacecraft -- visible only in spacecraft mode */}
+      <Spacecraft />
 
       {/* Advance simulation time each frame */}
       <TimeTicker />

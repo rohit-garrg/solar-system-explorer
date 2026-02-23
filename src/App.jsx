@@ -5,6 +5,8 @@ import CameraController from './components/CameraController'
 import FactCard from './components/ui/FactCard'
 import BackButton from './components/ui/BackButton'
 import TimeSlider from './components/ui/TimeSlider'
+import ModeToggle from './components/ui/ModeToggle'
+import DiscoveryTracker from './components/ui/DiscoveryTracker'
 import { CAMERA } from './utils/scaleConfig'
 
 /**
@@ -50,6 +52,8 @@ export default function App() {
         <FactCard />
         <BackButton />
         <TimeSlider />
+        <ModeToggle />
+        <DiscoveryTracker />
       </div>
     </ErrorBoundary>
   )

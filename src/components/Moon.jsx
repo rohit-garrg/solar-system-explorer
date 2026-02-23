@@ -35,7 +35,13 @@ export default function Moon({ moonKey, fallbackColor = '#888888' }) {
 
   const handleClick = useCallback((e) => {
     e.stopPropagation()
-    useStore.getState().selectBody(moonKey)
+    const store = useStore.getState()
+    if (store.spacecraftMode && !store.isFlying) {
+      store.setFlightTarget(moonKey)
+      store.setIsFlying(true)
+    } else if (!store.spacecraftMode) {
+      store.selectBody(moonKey)
+    }
   }, [moonKey])
 
   const handlePointerOver = useCallback((e) => {

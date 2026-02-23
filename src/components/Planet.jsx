@@ -181,7 +181,14 @@ export default function Planet({ planetKey, initialAngle = 0 }) {
 
   const handleClick = useCallback((e) => {
     e.stopPropagation()
-    useStore.getState().selectBody(planetKey)
+    const store = useStore.getState()
+    if (store.spacecraftMode && !store.isFlying) {
+      // In spacecraft mode, clicking sends the spacecraft to this planet
+      store.setFlightTarget(planetKey)
+      store.setIsFlying(true)
+    } else if (!store.spacecraftMode) {
+      store.selectBody(planetKey)
+    }
   }, [planetKey])
 
   const handlePointerOver = useCallback((e) => {

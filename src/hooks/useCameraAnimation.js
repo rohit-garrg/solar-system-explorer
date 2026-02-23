@@ -4,24 +4,30 @@ import * as THREE from 'three'
 import useStore from '../stores/useStore'
 import { getBodyWorldPosition } from '../utils/orbitMath'
 import { RADII, MOONS, CAMERA } from '../utils/scaleConfig'
+import { spacecraftPositionRef } from '../components/Spacecraft'
 
 const DEFAULT_POS = new THREE.Vector3(...CAMERA.defaultPosition)
 const DEFAULT_TARGET = new THREE.Vector3(...CAMERA.defaultLookAt)
 const LERP_FACTOR = 0.05
+const FLIGHT_LERP = 0.03  // Slower lerp during flight for cinematic feel
+
+// Size comparison camera preset
+const SIZE_COMP_POS = new THREE.Vector3(0, 10, 50)
+const SIZE_COMP_TARGET = new THREE.Vector3(0, 0, 0)
 
 /**
  * Smoothly animates the camera to focus on the selected body,
- * or back to the default overview when nothing is selected.
+ * follows the spacecraft during flight, supports size comparison mode,
+ * or returns to the default overview when nothing is selected.
  *
  * Receives a ref to OrbitControls so it can update the lookAt target.
- * Uses getBodyWorldPosition() to track moving bodies each frame.
  */
 export default function useCameraAnimation(controlsRef) {
   const { camera } = useThree()
   const isAnimating = useRef(false)
   const prevSelected = useRef(null)
 
-  // Detect selection change — reset animation flag
+  // Detect selection change -- reset animation flag
   useEffect(() => {
     const unsub = useStore.subscribe(
       (state) => state.selectedBody,
@@ -32,7 +38,6 @@ export default function useCameraAnimation(controlsRef) {
         }
       },
     )
-    // Also trigger on mount if something is already selected
     const current = useStore.getState().selectedBody
     if (current !== prevSelected.current) {
       isAnimating.current = true
@@ -45,7 +50,32 @@ export default function useCameraAnimation(controlsRef) {
     const controls = controlsRef?.current
     if (!controls) return
 
-    const { selectedBody, elapsedTime } = useStore.getState()
+    const { selectedBody, elapsedTime, isFlying, sizeComparisonMode } = useStore.getState()
+
+    // Size comparison mode: camera to side view
+    if (sizeComparisonMode) {
+      camera.position.lerp(SIZE_COMP_POS, LERP_FACTOR)
+      controls.target.lerp(SIZE_COMP_TARGET, LERP_FACTOR)
+      controls.update()
+      return
+    }
+
+    // Spacecraft in flight: follow the spacecraft in third-person
+    if (isFlying) {
+      const scPos = spacecraftPositionRef.current
+      // Camera offset: above and behind the spacecraft
+      const targetPos = new THREE.Vector3(
+        scPos.x + 5,
+        scPos.y + 8,
+        scPos.z + 5,
+      )
+      const targetLookAt = new THREE.Vector3(scPos.x, scPos.y, scPos.z)
+
+      camera.position.lerp(targetPos, FLIGHT_LERP)
+      controls.target.lerp(targetLookAt, FLIGHT_LERP)
+      controls.update()
+      return
+    }
 
     if (selectedBody) {
       // Compute the body's current world position
@@ -67,7 +97,7 @@ export default function useCameraAnimation(controlsRef) {
       controls.target.lerp(targetLookAt, LERP_FACTOR)
       controls.update()
 
-      // Check if close enough to stop animating (reduces jitter)
+      // Check if close enough to stop animating
       if (camera.position.distanceTo(targetPos) < 0.1) {
         isAnimating.current = false
       }

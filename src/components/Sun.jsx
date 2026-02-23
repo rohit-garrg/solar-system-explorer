@@ -75,7 +75,13 @@ export default function Sun() {
 
   const handleClick = useCallback((e) => {
     e.stopPropagation()
-    useStore.getState().selectBody('sun')
+    const store = useStore.getState()
+    if (store.spacecraftMode && !store.isFlying) {
+      store.setFlightTarget('sun')
+      store.setIsFlying(true)
+    } else if (!store.spacecraftMode) {
+      store.selectBody('sun')
+    }
   }, [])
 
   const handlePointerOver = useCallback((e) => {
