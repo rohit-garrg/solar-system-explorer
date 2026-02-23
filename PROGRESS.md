@@ -54,3 +54,14 @@ Step 7: DONE - Textures with graceful fallbacks
 - Sun.jsx: SunTextureBoundary + Suspense, MeshBasicMaterial (self-lit, not Standard)
 - Invisible click meshes for reliable pointer events on both planets and Sun
 - All textures gracefully degrade to fallback colors when files are missing
+
+Step 8: DONE - Moons with orbital animation and click interaction
+- moons.json: added fallbackColor for all 13 moons (unique per moon)
+- Moon.jsx: orbital group with Y-rotation at orbitSpeed * elapsedTime (absolute time, no drift)
+- Moon self-rotation: 0.02 rad/s, delta-based scaled by timeSpeed
+- All moons get expanded hit areas (all have radius < 0.5): getHitRadius()
+- Moon onClick calls selectBody(moonKey), pointer cursor on hover
+- Planet.jsx: renders moons inside tilt group, OUTSIDE spin group (moons don't spin with planet)
+- Moons wrapped in group with ref for visibility optimization
+- Visibility check: every 30 frames, compare camera distance to planet, hide moons when far (distToCam > distance * 0.6)
+- useCameraAnimation already handles moons via getBodyWorldPosition() + Math.max(radius*6, 3) min focus
