@@ -43,9 +43,9 @@ export default function VolumeControl() {
       {/* Mute/unmute toggle */}
       <button
         onClick={handleToggleMute}
-        className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors text-white"
+        className="w-11 h-11 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors text-white"
         aria-label={isMuted ? 'Unmute' : 'Mute'}
-        style={{ minWidth: 40, minHeight: 40 }}
+        style={{ minWidth: 44, minHeight: 44 }}
       >
         {isMuted ? (
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

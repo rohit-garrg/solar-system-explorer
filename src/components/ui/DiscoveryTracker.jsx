@@ -31,8 +31,8 @@ export default function DiscoveryTracker() {
 
   return (
     <>
-      {/* Discovery counter -- bottom left */}
-      <div className="fixed bottom-4 left-4 z-40 flex items-center gap-2 bg-black/60 backdrop-blur-sm rounded-full px-4 py-2 pointer-events-none select-none">
+      {/* Discovery counter -- bottom left (pushed up on mobile to avoid TimeSlider overlap) */}
+      <div className="fixed bottom-16 md:bottom-4 left-4 z-40 flex items-center gap-2 bg-black/60 backdrop-blur-sm rounded-full px-4 py-2 pointer-events-none select-none">
         {/* Small planet icon */}
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
           <circle cx="8" cy="8" r="6" stroke="white" strokeWidth="1.5" opacity="0.7" />

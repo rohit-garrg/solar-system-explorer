@@ -106,8 +106,9 @@ function CardContent({ body, currentFact, onNext, onDismiss }) {
         <h2 className="text-2xl font-bold">{body.name}</h2>
         <button
           onClick={onDismiss}
-          className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/20 transition-colors text-xl"
-          aria-label="Close"
+          className="w-11 h-11 flex items-center justify-center rounded-full hover:bg-white/20 transition-colors text-xl"
+          aria-label="Close fact card"
+          style={{ minWidth: 44, minHeight: 44 }}
         >
           ✕
         </button>
@@ -122,6 +123,8 @@ function CardContent({ body, currentFact, onNext, onDismiss }) {
       <button
         onClick={onNext}
         className="w-full py-3 bg-blue-600 hover:bg-blue-500 rounded-xl text-base font-medium transition-colors"
+        aria-label="Show next fact"
+        style={{ minHeight: 44 }}
       >
         Next Fact
       </button>
