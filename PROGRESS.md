@@ -34,3 +34,11 @@ Step 5: DONE - Click to select + fact cards
 - Sun.jsx: onClick selects 'sun', cursor pointer
 - FactCard.jsx: responsive (right panel desktop w-96, bottom sheet mobile), random starting fact, Next Fact button, stats grid, dismiss with slide-out animation
 - BackButton.jsx: fixed top-left, chevron icon, clears selection
+
+Step 6: DONE - Time controls
+- Custom range slider CSS in index.css (webkit + moz thumb styling, 20px touch targets)
+- TimeSlider.jsx: fixed bottom-center, bg-black/60 backdrop-blur, rounded-full
+- Range input 0.1x-20x, play/pause button 44x44px, speed label (font-mono)
+- Keyboard shortcuts: Space=pause (preventDefault), ArrowUp/Down=speed +/-1
+- Uses useStore.getState() in keydown handler to avoid stale closures
+- "FAST" pulse indicator when speed > 5x
