@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import useStore from '../../stores/useStore'
+import useAudio from '../../hooks/useAudio'
 import factsData from '../../data/facts.json'
 
 /**
@@ -14,6 +15,7 @@ export default function FactCard() {
   const clearSelection = useStore((s) => s.clearSelection)
   const incrementFactsViewed = useStore((s) => s.incrementFactsViewed)
 
+  const { playSfx } = useAudio()
   const [factIndex, setFactIndex] = useState(0)
   const [isVisible, setIsVisible] = useState(false)
 
@@ -34,7 +36,8 @@ export default function FactCard() {
     const facts = factsData[selectedBody].facts
     setFactIndex((prev) => (prev + 1) % facts.length)
     incrementFactsViewed()
-  }, [selectedBody, incrementFactsViewed])
+    playSfx('click')
+  }, [selectedBody, incrementFactsViewed, playSfx])
 
   const handleDismiss = useCallback(() => {
     setIsVisible(false)
