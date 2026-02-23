@@ -46,6 +46,10 @@ const useStore = create((set, get) => ({
   // Performance
   qualityLevel: 'high',   // 'high' | 'medium' | 'low'
 
+  // Postcard
+  postcardDataUrl: null,   // base64 PNG data URL of captured screenshot
+  capturePostcard: false,  // flag: when true, PostcardCaptureTrigger grabs the canvas
+
   // Actions
   setTimeSpeed: (speed) => set({ timeSpeed: speed }),
   togglePause: () => set((s) => ({ isPaused: !s.isPaused })),
@@ -81,6 +85,9 @@ const useStore = create((set, get) => ({
   setMasterVolume: (vol) => set({ masterVolume: vol }),
   setIsFlying: (flying) => set({ isFlying: flying }),
   setFlightTarget: (target) => set({ flightTarget: target }),
+  requestPostcardCapture: () => set({ capturePostcard: true }),
+  setPostcardDataUrl: (url) => set({ postcardDataUrl: url, capturePostcard: false }),
+  clearPostcard: () => set({ postcardDataUrl: null }),
 }))
 
 export default useStore

@@ -6,6 +6,7 @@ import OrbitLine from './OrbitLine'
 import AsteroidBelt from './AsteroidBelt'
 import Comet from './Comet'
 import Spacecraft from './Spacecraft'
+import PostcardCaptureTrigger from './PostcardCaptureTrigger'
 import useStore from '../stores/useStore'
 import planetsData from '../data/planets.json'
 import cometsData from '../data/comets.json'
@@ -88,6 +89,9 @@ export default function SolarSystem() {
 
       {/* Advance simulation time each frame */}
       <TimeTicker />
+
+      {/* Postcard screenshot trigger (captures canvas on request) */}
+      <PostcardCaptureTrigger />
     </group>
   )
 }
