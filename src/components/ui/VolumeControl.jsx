@@ -14,9 +14,6 @@ export default function VolumeControl() {
   const [showSlider, setShowSlider] = useState(false)
   const [prevVolume, setPrevVolume] = useState(0.5)
 
-  // Hide until audio is enabled
-  if (!audioEnabled) return null
-
   const isMuted = masterVolume === 0
 
   const handleToggleMute = useCallback(() => {
@@ -33,6 +30,9 @@ export default function VolumeControl() {
     setMasterVolume(vol)
     if (vol > 0) setPrevVolume(vol)
   }, [setMasterVolume])
+
+  // Hide until audio is enabled (after all hooks)
+  if (!audioEnabled) return null
 
   return (
     <div

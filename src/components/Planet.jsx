@@ -12,6 +12,7 @@ import {
   SATURN_RING,
   SIZE_COMPARISON_POSITIONS,
   SIZE_VS_EARTH,
+  MOONS,
   getHitRadius,
 } from '../utils/scaleConfig'
 import { degToRad } from '../utils/orbitMath'
@@ -207,7 +208,11 @@ function PlanetInner({ planetKey, initialAngle = 0 }) {
   const handleClick = useCallback((e) => {
     e.stopPropagation()
     const store = useStore.getState()
-    if (store.sizeComparisonMode) return // No clicking in comparison mode
+    if (store.sizeComparisonMode) {
+      // In size comparison mode, tapping a planet shows its fact card
+      store.selectBody(planetKey)
+      return
+    }
     if (store.spacecraftMode && !store.isFlying) {
       store.setFlightTarget(planetKey)
       store.setIsFlying(true)
@@ -230,7 +235,7 @@ function PlanetInner({ planetKey, initialAngle = 0 }) {
   useFrame((state, delta) => {
     if (!outerGroupRef.current || !spinGroupRef.current || !offsetGroupRef.current) return
 
-    const { elapsedTime, timeSpeed, isPaused, sizeComparisonMode } = useStore.getState()
+    const { elapsedTime, timeSpeed, isPaused, sizeComparisonMode, selectedBody } = useStore.getState()
 
     if (sizeComparisonMode) {
       // Size comparison mode: lerp orbit rotation to 0, offset to lineup position
@@ -254,9 +259,13 @@ function PlanetInner({ planetKey, initialAngle = 0 }) {
       _compTarget.set(distance, 0, 0)
       offsetGroupRef.current.position.lerp(_compTarget, 0.05)
 
-      // Self-rotation -- delta-based, scaled by timeSpeed
-      if (!isPaused) {
-        spinGroupRef.current.rotation.y += rotSpeed * delta * timeSpeed
+      // Self-rotation -- delta-based, scaled by timeSpeed.
+      // When paused but this planet (or one of its moons) is selected,
+      // keep spinning at 1x speed so the planet feels alive.
+      const isSelectedSystem = selectedBody === planetKey ||
+        (MOONS[selectedBody] && MOONS[selectedBody].parent === planetKey)
+      if (!isPaused || isSelectedSystem) {
+        spinGroupRef.current.rotation.y += rotSpeed * delta * (isPaused ? 1 : timeSpeed)
       }
 
       // Moon visibility optimization -- check every 30 frames
@@ -279,7 +288,6 @@ function PlanetInner({ planetKey, initialAngle = 0 }) {
     spinGroupRef.current.scale.setScalar(hoverScale.current)
 
     // Label visibility check (every 30 frames, reuse frameCounter)
-    const { selectedBody } = useStore.getState()
     if (frameCounter.current % 30 === 0) {
       const camDist = state.camera.position.length()
       const shouldShowLabel = camDist > 80 && !selectedBody && !sizeComparisonMode
@@ -289,7 +297,7 @@ function PlanetInner({ planetKey, initialAngle = 0 }) {
     // Pulsing highlight ring when this planet is selected
     if (highlightRef.current) {
       const isSelected = selectedBody === planetKey
-      highlightRef.current.visible = isSelected && !sizeComparisonMode
+      highlightRef.current.visible = isSelected
       if (isSelected) {
         const t = state.clock.getElapsedTime()
         highlightRef.current.material.opacity = 0.3 + 0.5 * (0.5 + 0.5 * Math.sin(t * 3))

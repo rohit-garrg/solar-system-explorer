@@ -20,7 +20,7 @@ export function circularOrbitPosition(distance, speed, elapsedTime, initialAngle
   return [
     distance * Math.cos(angle),
     0,
-    distance * Math.sin(angle),
+    distance * -Math.sin(angle),
   ]
 }
 
@@ -131,7 +131,7 @@ export function lerp(start, end, t) {
  * MOONS in scaleConfig is keyed by moon name, with a `parent` field.
  * moons.json is keyed by parent planet.
  */
-import { DISTANCES, ORBITAL_SPEEDS, MOONS, INITIAL_ANGLES } from './scaleConfig'
+import { DISTANCES, ORBITAL_SPEEDS, MOONS, INITIAL_ANGLES, AXIAL_TILTS } from './scaleConfig'
 import cometsData from '../data/comets.json'
 
 // Build a lookup map for comet data by key
@@ -148,19 +148,40 @@ export function getBodyWorldPosition(bodyKey, elapsedTime) {
     return [
       DISTANCES[bodyKey] * Math.cos(angle),
       0,
-      DISTANCES[bodyKey] * Math.sin(angle),
+      DISTANCES[bodyKey] * -Math.sin(angle),
     ]
   }
 
-  // Moon — offset from parent planet's position
+  // Moon — must replicate the full scene-graph transform chain:
+  //   outerGroup(Y-rot: parentAngle) > offsetGroup(translate: [distance,0,0])
+  //     > tiltGroup(Z-rot: tilt) > moonOrbit(Y-rot: moonAngle)
+  //       > moonOffset(translate: [moonOrbitDist,0,0])
   if (MOONS[bodyKey]) {
     const moon = MOONS[bodyKey]
-    const parentPos = getBodyWorldPosition(moon.parent, elapsedTime)
+    const parentKey = moon.parent
+    const parentDist = DISTANCES[parentKey]
+    const parentAngle = ORBITAL_SPEEDS[parentKey] * elapsedTime + (INITIAL_ANGLES[parentKey] || 0)
+    const tiltRad = ((AXIAL_TILTS[parentKey] || 0) * Math.PI) / 180
+
+    // Moon position in local frame (after its own Y-axis orbital rotation)
     const moonAngle = moon.orbitSpeed * elapsedTime
+    const localX = moon.orbitDistance * Math.cos(moonAngle)
+    const localZ = moon.orbitDistance * -Math.sin(moonAngle)
+
+    // Apply parent's Z-axis axial tilt
+    const tiltedX = localX * Math.cos(tiltRad)
+    const tiltedY = localX * Math.sin(tiltRad)
+    const tiltedZ = localZ
+
+    // Add parent's orbital distance offset, then apply parent's Y-axis orbital rotation
+    const ox = tiltedX + parentDist
+    const cosP = Math.cos(parentAngle)
+    const sinP = Math.sin(parentAngle)
+
     return [
-      parentPos[0] + moon.orbitDistance * Math.cos(moonAngle),
-      parentPos[1],
-      parentPos[2] + moon.orbitDistance * Math.sin(moonAngle),
+      ox * cosP + tiltedZ * sinP,
+      tiltedY,
+      -ox * sinP + tiltedZ * cosP,
     ]
   }
 

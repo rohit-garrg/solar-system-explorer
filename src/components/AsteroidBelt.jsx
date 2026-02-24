@@ -49,11 +49,11 @@ export default function AsteroidBelt() {
       const scale = ASTEROID_BELT.minSize + Math.random() * (ASTEROID_BELT.maxSize - ASTEROID_BELT.minSize)
       scales.push(scale)
 
-      // Random gray-brown color (R:0.35-0.55, G:0.30-0.50, B:0.25-0.45)
+      // Brighter gray-brown color (R:0.45-0.70, G:0.40-0.60, B:0.30-0.45)
       colors.push(
-        0.35 + Math.random() * 0.2,
-        0.30 + Math.random() * 0.2,
-        0.25 + Math.random() * 0.2,
+        0.45 + Math.random() * 0.25,
+        0.40 + Math.random() * 0.20,
+        0.30 + Math.random() * 0.15,
       )
     }
 
@@ -107,11 +107,7 @@ export default function AsteroidBelt() {
       args={[geometry, undefined, count]}
       frustumCulled={false}
     >
-      <meshStandardMaterial
-        vertexColors
-        roughness={0.9}
-        metalness={0.1}
-      />
+      <meshBasicMaterial vertexColors />
     </instancedMesh>
   )
 }

@@ -30,6 +30,27 @@ export default defineConfig({
   // Relative asset paths for iframe embedding and static hosting
   base: './',
 
+  // Force Vite to re-bundle three with our shim during dev
+  optimizeDeps: {
+    esbuildOptions: {
+      plugins: [
+        {
+          name: 'three-compat-shim',
+          setup(build) {
+            build.onLoad({ filter: /three\/build\/three\.module\.js$/ }, async (args) => {
+              const fs = await import('fs')
+              let contents = fs.readFileSync(args.path, 'utf8')
+              if (!contents.includes('LinearEncoding')) {
+                contents += '\nexport const LinearEncoding = 3000;\nexport const sRGBEncoding = 3001;\n'
+              }
+              return { contents, loader: 'js' }
+            })
+          },
+        },
+      ],
+    },
+  },
+
   build: {
     // Split Three.js into its own chunk for better caching
     rollupOptions: {

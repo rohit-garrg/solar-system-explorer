@@ -10,6 +10,10 @@ import useAudio from '../hooks/useAudio'
  * - selectedBody  -> play planet tone (fade out previous)
  * - isFlying      -> play whoosh SFX on start, arrive SFX on end
  * - masterVolume  -> update all active audio volumes
+ * - tab visibility -> pause/resume all audio
+ *
+ * All subscribe callbacks are wrapped in try-catch so audio errors
+ * never propagate through Zustand into React (which would crash the app).
  *
  * Rendered in App.jsx. Returns null (no visual output).
  */
@@ -21,6 +25,9 @@ export default function AudioManager() {
     stopPlanetTone,
     playSfx,
     updateVolume,
+    pauseAll,
+    resumeAll,
+    destroyAll,
   } = useAudio()
 
   const prevFlying = useRef(false)
@@ -30,10 +37,11 @@ export default function AudioManager() {
     const unsub = useStore.subscribe(
       (s) => s.audioEnabled,
       (enabled) => {
-        if (enabled) {
-          playAmbient()
-        } else {
-          stopAmbient()
+        try {
+          if (enabled) playAmbient()
+          else stopAmbient()
+        } catch (e) {
+          console.warn('Audio error (ambient):', e)
         }
       },
     )
@@ -45,13 +53,14 @@ export default function AudioManager() {
     const unsub = useStore.subscribe(
       (s) => s.selectedBody,
       (body) => {
-        const { audioEnabled } = useStore.getState()
-        if (!audioEnabled) return
+        try {
+          const { audioEnabled } = useStore.getState()
+          if (!audioEnabled) return
 
-        if (body) {
-          playPlanetTone(body)
-        } else {
-          stopPlanetTone()
+          if (body) playPlanetTone(body)
+          else stopPlanetTone()
+        } catch (e) {
+          console.warn('Audio error (planet tone):', e)
         }
       },
     )
@@ -63,12 +72,13 @@ export default function AudioManager() {
     const unsub = useStore.subscribe(
       (s) => s.isFlying,
       (isFlying) => {
-        if (isFlying && !prevFlying.current) {
-          playSfx('whoosh')
-        } else if (!isFlying && prevFlying.current) {
-          playSfx('arrive')
+        try {
+          if (isFlying && !prevFlying.current) playSfx('whoosh')
+          else if (!isFlying && prevFlying.current) playSfx('arrive')
+          prevFlying.current = isFlying
+        } catch (e) {
+          console.warn('Audio error (sfx):', e)
         }
-        prevFlying.current = isFlying
       },
     )
     return unsub
@@ -79,11 +89,41 @@ export default function AudioManager() {
     const unsub = useStore.subscribe(
       (s) => s.masterVolume,
       (vol) => {
-        updateVolume(vol)
+        try {
+          updateVolume(vol)
+        } catch (e) {
+          console.warn('Audio error (volume):', e)
+        }
       },
     )
     return unsub
   }, [updateVolume])
+
+  // Pause/resume audio when tab visibility changes
+  useEffect(() => {
+    function handleVisibilityChange() {
+      try {
+        if (document.hidden) pauseAll()
+        else resumeAll()
+      } catch (e) {
+        console.warn('Audio error (visibility):', e)
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
+  }, [pauseAll, resumeAll])
+
+  // Cleanup all audio on unmount
+  useEffect(() => {
+    return () => {
+      try {
+        destroyAll()
+      } catch (e) {
+        console.warn('Audio cleanup error:', e)
+      }
+    }
+  }, [destroyAll])
 
   return null
 }

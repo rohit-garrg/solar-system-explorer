@@ -113,8 +113,8 @@ export const ASTEROID_BELT = {
   lowCount: 200,
   rotationSpeed: 0.002,
   ySpread: 1.5,       // Random Y offset range: -1.5 to +1.5
-  minSize: 0.03,
-  maxSize: 0.12,
+  minSize: 0.1,
+  maxSize: 0.35,
 }
 
 // Saturn ring dimensions
@@ -166,21 +166,31 @@ export const SIZE_COMPARISON_ORDER = [
 // Compute X positions for size comparison lineup.
 // Planets spaced so they don't overlap, with padding between them.
 // Centered around X=0 for the camera preset [0, 10, 50].
-const SIZE_COMP_PADDING = 1.5
+const SIZE_COMP_PADDING = 2.0
+const SIZE_COMP_MIN_CENTER_DISTANCE = 4.5 // Prevents label overlap for small planets
 export const SIZE_COMPARISON_POSITIONS = (() => {
   const positions = {}
-  let x = -20 // Start position (left side)
+  let x = 0 // Start at 0, we'll center after
+  let prevRadius = 0
 
   for (const key of SIZE_COMPARISON_ORDER) {
     const r = RADII[key]
-    x += r // Move in by radius
+    // Edge-based distance: previous radius + gap + this radius
+    const edgeBased = prevRadius + SIZE_COMP_PADDING + r
+    // Use whichever is larger so small planets don't bunch up
+    const step = prevRadius === 0 ? r : Math.max(edgeBased, SIZE_COMP_MIN_CENTER_DISTANCE)
+    x += prevRadius === 0 ? r : step
     positions[key] = { x, y: 0, z: 0 }
-    x += r + SIZE_COMP_PADDING // Move past radius + gap
+    prevRadius = r
   }
 
-  // Center the lineup around X=0
-  const totalWidth = x + 20 // Approximate total width
-  const centerOffset = (x - RADII[SIZE_COMPARISON_ORDER[0]]) / 2
+  // Total width is from the left edge of the first planet to the right edge of the last
+  const firstKey = SIZE_COMPARISON_ORDER[0]
+  const lastKey = SIZE_COMPARISON_ORDER[SIZE_COMPARISON_ORDER.length - 1]
+  const leftEdge = positions[firstKey].x - RADII[firstKey]
+  const rightEdge = positions[lastKey].x + RADII[lastKey]
+  const centerOffset = (leftEdge + rightEdge) / 2
+
   for (const key of SIZE_COMPARISON_ORDER) {
     positions[key].x -= centerOffset
   }

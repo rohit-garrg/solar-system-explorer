@@ -1,4 +1,5 @@
 import { useCallback } from 'react'
+import { Howler } from 'howler'
 import useStore from '../../stores/useStore'
 
 /**
@@ -12,6 +13,13 @@ export default function SoundEnableButton() {
   const enableAudio = useStore((s) => s.enableAudio)
 
   const handleClick = useCallback(() => {
+    // Unlock the Web Audio API context directly in the user gesture handler.
+    // Zustand subscriptions fire asynchronously, so by the time AudioManager
+    // calls playAmbient(), we may no longer be in a user-gesture context.
+    // Resuming here ensures the AudioContext is unlocked while we still have it.
+    if (Howler.ctx && Howler.ctx.state === 'suspended') {
+      Howler.ctx.resume()
+    }
     enableAudio()
   }, [enableAudio])
 

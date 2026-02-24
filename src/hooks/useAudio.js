@@ -1,5 +1,4 @@
-import { useRef, useEffect, useCallback } from 'react'
-import { Howl } from 'howler'
+import { Howl, Howler } from 'howler'
 import useStore from '../stores/useStore'
 
 /**
@@ -8,24 +7,39 @@ import useStore from '../stores/useStore'
  * has onloaderror that silently degrades.
  */
 const AUDIO_PATHS = {
-  ambient: '/audio/ambient-space.mp3',
+  ambient: '/audio/ambient-space.wav',
   planetTones: {
-    sun: '/audio/planet-tones/sun.mp3',
-    mercury: '/audio/planet-tones/mercury.mp3',
-    venus: '/audio/planet-tones/venus.mp3',
-    earth: '/audio/planet-tones/earth.mp3',
-    mars: '/audio/planet-tones/mars.mp3',
-    jupiter: '/audio/planet-tones/jupiter.mp3',
-    saturn: '/audio/planet-tones/saturn.mp3',
-    uranus: '/audio/planet-tones/uranus.mp3',
-    neptune: '/audio/planet-tones/neptune.mp3',
-    pluto: '/audio/planet-tones/pluto.mp3',
+    sun: '/audio/planet-tones/sun.wav',
+    mercury: '/audio/planet-tones/mercury.wav',
+    venus: '/audio/planet-tones/venus.wav',
+    earth: '/audio/planet-tones/earth.wav',
+    mars: '/audio/planet-tones/mars.wav',
+    jupiter: '/audio/planet-tones/jupiter.wav',
+    saturn: '/audio/planet-tones/saturn.wav',
+    uranus: '/audio/planet-tones/uranus.wav',
+    neptune: '/audio/planet-tones/neptune.wav',
+    pluto: '/audio/planet-tones/pluto.wav',
   },
   sfx: {
-    whoosh: '/audio/sfx/whoosh.mp3',
-    arrive: '/audio/sfx/arrive.mp3',
-    click: '/audio/sfx/click.mp3',
+    whoosh: '/audio/sfx/whoosh.wav',
+    arrive: '/audio/sfx/arrive.wav',
+    click: '/audio/sfx/click.wav',
   },
+}
+
+/**
+ * Safely plays a Howl instance. Catches errors from missing/invalid audio files
+ * so the app never crashes when audio is unavailable.
+ */
+function safePlay(howl) {
+  if (!howl) return
+  try {
+    // 'unloaded' means the source failed to load — playing would throw
+    if (howl.state() === 'unloaded') return
+    howl.play()
+  } catch (e) {
+    console.warn('Audio play failed:', e)
+  }
 }
 
 /**
@@ -39,158 +53,161 @@ function createHowl(src, options = {}) {
       preload: true,
       onloaderror: (id, err) => {
         // Audio file not found or invalid -- this is expected for placeholders
-        console.debug(`Audio not available: ${src}`, err)
+        console.warn(`Audio not available: ${src}`, err)
       },
       onplayerror: (id, err) => {
-        console.debug(`Audio play error: ${src}`, err)
+        console.warn(`Audio play error: ${src}`, err)
       },
       ...options,
     })
   } catch (e) {
-    console.debug(`Failed to create Howl for ${src}:`, e)
+    console.warn(`Failed to create Howl for ${src}:`, e)
     return null
   }
 }
 
+// ── Module-level singleton state ──────────────────────────────────────
+// Shared across all consumers of useAudio(). This ensures only one
+// ambient sound, one SFX cache, and one AudioContext resume ever exist.
+let ambientHowl = null
+let currentTone = null
+let currentToneKey = null
+const sfxCache = {}
+let isSetup = false
+
 /**
- * Howler.js wrapper hook for audio playback.
+ * Initialize ambient sound and SFX cache (lazy, on first call).
+ * Does NOT resume AudioContext — that must happen in a user gesture
+ * handler (see SoundEnableButton.jsx).
+ */
+function ensureSetup() {
+  if (isSetup) return
+  isSetup = true
+
+  // Create ambient loop
+  ambientHowl = createHowl(AUDIO_PATHS.ambient, {
+    loop: true,
+    volume: 0.3,
+  })
+
+  // Pre-create SFX
+  Object.entries(AUDIO_PATHS.sfx).forEach(([key, path]) => {
+    sfxCache[key] = createHowl(path, { volume: 0.5 })
+  })
+}
+
+function playAmbient() {
+  ensureSetup()
+  const { masterVolume } = useStore.getState()
+  if (ambientHowl) {
+    ambientHowl.volume(0.3 * masterVolume)
+    safePlay(ambientHowl)
+  }
+}
+
+function stopAmbient() {
+  if (ambientHowl) {
+    ambientHowl.fade(ambientHowl.volume(), 0, 500)
+    setTimeout(() => {
+      if (ambientHowl) ambientHowl.stop()
+    }, 500)
+  }
+}
+
+function playPlanetTone(bodyKey) {
+  ensureSetup()
+  // Stop current tone first
+  if (currentTone) {
+    currentTone.fade(currentTone.volume(), 0, 300)
+    const old = currentTone
+    setTimeout(() => old.stop(), 300)
+  }
+
+  const path = AUDIO_PATHS.planetTones[bodyKey]
+  if (!path) {
+    currentTone = null
+    currentToneKey = null
+    return
+  }
+
+  const { masterVolume } = useStore.getState()
+  const tone = createHowl(path, { loop: true, volume: 0.4 * masterVolume })
+  if (tone) {
+    safePlay(tone)
+    currentTone = tone
+    currentToneKey = bodyKey
+  }
+}
+
+function stopPlanetTone() {
+  if (currentTone) {
+    currentTone.fade(currentTone.volume(), 0, 500)
+    const old = currentTone
+    setTimeout(() => old.stop(), 500)
+    currentTone = null
+    currentToneKey = null
+  }
+}
+
+function playSfx(name) {
+  ensureSetup()
+  const { audioEnabled, masterVolume } = useStore.getState()
+  if (!audioEnabled) return
+
+  const sound = sfxCache[name]
+  if (sound) {
+    sound.volume(0.5 * masterVolume)
+    safePlay(sound)
+  }
+}
+
+function updateVolume(vol) {
+  if (ambientHowl) {
+    ambientHowl.volume(0.3 * vol)
+  }
+  if (currentTone) {
+    currentTone.volume(0.4 * vol)
+  }
+}
+
+/**
+ * Pause all currently playing audio (used for tab visibility).
+ */
+function pauseAll() {
+  if (ambientHowl?.playing()) ambientHowl.pause()
+  if (currentTone?.playing()) currentTone.pause()
+}
+
+/**
+ * Resume audio after tab becomes visible again.
+ */
+function resumeAll() {
+  const { audioEnabled, selectedBody } = useStore.getState()
+  if (!audioEnabled) return
+  if (ambientHowl && !ambientHowl.playing()) safePlay(ambientHowl)
+  if (selectedBody && currentTone && !currentTone.playing()) safePlay(currentTone)
+}
+
+/**
+ * Stop and unload all audio. Called on AudioManager unmount.
+ */
+function destroyAll() {
+  if (ambientHowl) { ambientHowl.unload(); ambientHowl = null }
+  if (currentTone) { currentTone.unload(); currentTone = null }
+  currentToneKey = null
+  Object.values(sfxCache).forEach((s) => { if (s) s.unload() })
+  Object.keys(sfxCache).forEach((k) => delete sfxCache[k])
+  isSetup = false
+}
+
+/**
+ * Howler.js wrapper hook.
  *
- * - Ambient loop plays continuously when audio is enabled
- * - Planet tones play on body selection, fade out on deselection
- * - SFX (whoosh, arrive, click) are short one-shots
- * - All gated by audioEnabled and masterVolume from the store
- * - Tab visibility pause/resume via visibilitychange
- *
- * Returns: { playAmbient, stopAmbient, playPlanetTone, stopPlanetTone, playSfx }
+ * Returns references to module-level singleton functions.
+ * Multiple components can call useAudio() without creating duplicate
+ * Howl instances or AudioContext resumes.
  */
 export default function useAudio() {
-  const ambientRef = useRef(null)
-  const currentToneRef = useRef(null)
-  const currentToneKey = useRef(null)
-  const sfxCache = useRef({})
-  const isSetup = useRef(false)
-
-  // Initialize ambient sound (lazy, on first call)
-  const ensureSetup = useCallback(() => {
-    if (isSetup.current) return
-    isSetup.current = true
-
-    // Create ambient loop
-    ambientRef.current = createHowl(AUDIO_PATHS.ambient, {
-      loop: true,
-      volume: 0.3,
-    })
-
-    // Pre-create SFX
-    Object.entries(AUDIO_PATHS.sfx).forEach(([key, path]) => {
-      sfxCache.current[key] = createHowl(path, { volume: 0.5 })
-    })
-  }, [])
-
-  // Pause/resume all audio when tab visibility changes
-  useEffect(() => {
-    function handleVisibilityChange() {
-      if (document.hidden) {
-        if (ambientRef.current?.playing()) {
-          ambientRef.current.pause()
-        }
-        if (currentToneRef.current?.playing()) {
-          currentToneRef.current.pause()
-        }
-      } else {
-        const { audioEnabled } = useStore.getState()
-        if (audioEnabled) {
-          if (ambientRef.current && !ambientRef.current.playing()) {
-            ambientRef.current.play()
-          }
-          // Resume planet tone only if we still have a selected body
-          const { selectedBody } = useStore.getState()
-          if (selectedBody && currentToneRef.current && !currentToneRef.current.playing()) {
-            currentToneRef.current.play()
-          }
-        }
-      }
-    }
-
-    document.addEventListener('visibilitychange', handleVisibilityChange)
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
-  }, [])
-
-  const playAmbient = useCallback(() => {
-    ensureSetup()
-    const { masterVolume } = useStore.getState()
-    if (ambientRef.current) {
-      ambientRef.current.volume(0.3 * masterVolume)
-      ambientRef.current.play()
-    }
-  }, [ensureSetup])
-
-  const stopAmbient = useCallback(() => {
-    if (ambientRef.current) {
-      ambientRef.current.fade(ambientRef.current.volume(), 0, 500)
-      setTimeout(() => {
-        if (ambientRef.current) ambientRef.current.stop()
-      }, 500)
-    }
-  }, [])
-
-  const playPlanetTone = useCallback((bodyKey) => {
-    ensureSetup()
-    // Stop current tone first
-    if (currentToneRef.current) {
-      currentToneRef.current.fade(currentToneRef.current.volume(), 0, 300)
-      const old = currentToneRef.current
-      setTimeout(() => old.stop(), 300)
-    }
-
-    const path = AUDIO_PATHS.planetTones[bodyKey]
-    if (!path) {
-      currentToneRef.current = null
-      currentToneKey.current = null
-      return
-    }
-
-    const { masterVolume } = useStore.getState()
-    const tone = createHowl(path, { loop: true, volume: 0.4 * masterVolume })
-    if (tone) {
-      tone.play()
-      currentToneRef.current = tone
-      currentToneKey.current = bodyKey
-    }
-  }, [ensureSetup])
-
-  const stopPlanetTone = useCallback(() => {
-    if (currentToneRef.current) {
-      currentToneRef.current.fade(currentToneRef.current.volume(), 0, 500)
-      const old = currentToneRef.current
-      setTimeout(() => old.stop(), 500)
-      currentToneRef.current = null
-      currentToneKey.current = null
-    }
-  }, [])
-
-  const playSfx = useCallback((name) => {
-    ensureSetup()
-    const { audioEnabled, masterVolume } = useStore.getState()
-    if (!audioEnabled) return
-
-    const sound = sfxCache.current[name]
-    if (sound) {
-      sound.volume(0.5 * masterVolume)
-      sound.play()
-    }
-  }, [ensureSetup])
-
-  // Update volumes when masterVolume changes
-  const updateVolume = useCallback((vol) => {
-    if (ambientRef.current) {
-      ambientRef.current.volume(0.3 * vol)
-    }
-    if (currentToneRef.current) {
-      currentToneRef.current.volume(0.4 * vol)
-    }
-  }, [])
-
   return {
     playAmbient,
     stopAmbient,
@@ -198,5 +215,8 @@ export default function useAudio() {
     stopPlanetTone,
     playSfx,
     updateVolume,
+    pauseAll,
+    resumeAll,
+    destroyAll,
   }
 }

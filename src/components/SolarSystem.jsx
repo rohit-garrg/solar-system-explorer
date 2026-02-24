@@ -49,16 +49,12 @@ export default function SolarSystem() {
 
   return (
     <group>
-      {/* Very low ambient so planet dark sides aren't pitch black */}
-      <ambientLight intensity={sizeComparisonMode ? 0.4 : 0.1} />
-
-      {/* Sun -- self-lit sphere + point light that illuminates planets */}
+      <ambientLight intensity={sizeComparisonMode ? 0.8 : 0.1} />
       <Sun />
+      <TimeTicker />
 
-      {/* Background star field */}
+      {/* DEBUG: uncomment components one by one to find the crash */}
       <Starfield />
-
-      {/* Orbit lines, asteroid belt, comets -- hidden in size comparison mode */}
       {!sizeComparisonMode && (
         <>
           {planetsData.map((planet) => (
@@ -76,7 +72,6 @@ export default function SolarSystem() {
         </>
       )}
 
-      {/* Planets -- always rendered (handle their own comparison mode transition) */}
       {planetsData.map((planet) => (
         <Planet
           key={planet.key}
@@ -85,16 +80,8 @@ export default function SolarSystem() {
         />
       ))}
 
-      {/* Spacecraft -- visible only in spacecraft mode */}
       <Spacecraft />
-
-      {/* Advance simulation time each frame */}
-      <TimeTicker />
-
-      {/* Postcard screenshot trigger (captures canvas on request) */}
       <PostcardCaptureTrigger />
-
-      {/* FPS monitoring -- adjusts qualityLevel in the store */}
       <PerformanceMonitor />
     </group>
   )

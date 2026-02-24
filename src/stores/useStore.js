@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { subscribeWithSelector } from 'zustand/middleware'
 
 // Load persisted visited bodies from localStorage
 function loadVisitedBodies() {
@@ -19,7 +20,7 @@ function persistVisitedBodies(bodies) {
   }
 }
 
-const useStore = create((set, get) => ({
+const useStore = create(subscribeWithSelector((set, get) => ({
   // Time
   timeSpeed: 1,          // 0.1 to 20
   isPaused: false,
@@ -28,6 +29,10 @@ const useStore = create((set, get) => ({
   // Selection
   selectedBody: null,     // string key like "earth", "io", or null
   previousBody: null,     // for back navigation
+  wasPausedBeforeSelect: false, // remembers pause state so deselect can restore it
+
+  // Camera reset (used by BackButton when no body is selected)
+  requestingReset: false,
 
   // Modes
   spacecraftMode: false,
@@ -55,9 +60,15 @@ const useStore = create((set, get) => ({
   togglePause: () => set((s) => ({ isPaused: !s.isPaused })),
   selectBody: (key) => {
     const state = get()
+    // On first selection (nothing was selected before), capture pause state
+    const wasPaused = state.selectedBody === null
+      ? state.isPaused
+      : state.wasPausedBeforeSelect
     set({
       selectedBody: key,
       previousBody: state.selectedBody,
+      wasPausedBeforeSelect: wasPaused,
+      isPaused: true, // Freeze orbits so the planet stays under the camera
     })
     // Mark as visited
     if (key && !state.visitedBodies.includes(key)) {
@@ -66,7 +77,16 @@ const useStore = create((set, get) => ({
       set({ visitedBodies: updated })
     }
   },
-  clearSelection: () => set({ selectedBody: null }),
+  clearSelection: () => set((s) => ({
+    selectedBody: null,
+    isPaused: s.wasPausedBeforeSelect, // Restore original pause state
+  })),
+  resetView: () => set((s) => ({
+    selectedBody: null,
+    requestingReset: true,
+    isPaused: s.selectedBody ? s.wasPausedBeforeSelect : s.isPaused,
+  })),
+  clearResetRequest: () => set({ requestingReset: false }),
   toggleSpacecraftMode: () => set((s) => ({ spacecraftMode: !s.spacecraftMode })),
   toggleSizeComparison: () => set((s) => ({
     sizeComparisonMode: !s.sizeComparisonMode,
@@ -88,6 +108,6 @@ const useStore = create((set, get) => ({
   requestPostcardCapture: () => set({ capturePostcard: true }),
   setPostcardDataUrl: (url) => set({ postcardDataUrl: url, capturePostcard: false }),
   clearPostcard: () => set({ postcardDataUrl: null }),
-}))
+})))
 
 export default useStore

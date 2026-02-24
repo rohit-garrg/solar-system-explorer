@@ -3,6 +3,22 @@ import { useFrame } from '@react-three/fiber'
 import { MOONS, getHitRadius } from '../utils/scaleConfig'
 import useStore from '../stores/useStore'
 
+// Look up which moons share a parent, so we can tell if the "selected" body
+// is a sibling moon (meaning this moon's system is active and should keep moving).
+function isSameSystem(moonKey, selectedBody) {
+  if (!selectedBody) return false
+  const config = MOONS[moonKey]
+  if (!config) return false
+  // Selected body is this moon
+  if (selectedBody === moonKey) return true
+  // Selected body is the parent planet
+  if (selectedBody === config.parent) return true
+  // Selected body is a sibling moon (same parent)
+  const selectedMoon = MOONS[selectedBody]
+  if (selectedMoon && selectedMoon.parent === config.parent) return true
+  return false
+}
+
 const MOON_SELF_ROTATION = 0.02  // Slow self-spin for all moons
 const MOON_SEGMENTS = { high: 32, medium: 16, low: 8 }
 
@@ -58,17 +74,32 @@ function MoonInner({ moonKey, fallbackColor = '#888888' }) {
     document.body.style.cursor = 'auto'
   }, [])
 
+  // Local time accumulator for the "paused but selected system" case.
+  // elapsedTime stops advancing when paused, so we track extra time here.
+  const localTimeRef = useRef(0)
+
   useFrame((_, delta) => {
     if (!orbitalRef.current) return
 
-    const { elapsedTime, timeSpeed, isPaused } = useStore.getState()
+    const { elapsedTime, timeSpeed, isPaused, selectedBody } = useStore.getState()
+    const isRelevant = isSameSystem(moonKey, selectedBody)
+
+    // When paused but this moon's system is active, accumulate local time
+    // so orbital motion continues at 1x speed.
+    if (isPaused && isRelevant) {
+      localTimeRef.current += delta
+    } else if (!isPaused) {
+      localTimeRef.current = 0
+    }
+
+    const effectiveTime = elapsedTime + localTimeRef.current
 
     // Moon orbital position -- absolute time, no drift
-    orbitalRef.current.rotation.y = orbitSpeed * elapsedTime
+    orbitalRef.current.rotation.y = orbitSpeed * effectiveTime
 
     // Slow self-rotation
-    if (meshRef.current && !isPaused) {
-      meshRef.current.rotation.y += MOON_SELF_ROTATION * delta * timeSpeed
+    if (meshRef.current && (!isPaused || isRelevant)) {
+      meshRef.current.rotation.y += MOON_SELF_ROTATION * delta * (isPaused ? 1 : timeSpeed)
     }
   })
 
