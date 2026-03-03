@@ -1,9 +1,10 @@
-import { useRef, useCallback, Suspense, Component } from 'react'
+import { useRef, useCallback, Suspense } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { useTexture, Html } from '@react-three/drei'
 import * as THREE from 'three'
 import { RADII, ROTATION_SPEEDS, FALLBACK_COLORS, SIZE_VS_EARTH } from '../utils/scaleConfig'
 import useStore from '../stores/useStore'
+import TextureErrorBoundary from './TextureErrorBoundary'
 
 const SUN_RADIUS = RADII.sun          // 8.0 scene units
 const GLOW_RADIUS = SUN_RADIUS * 1.2  // Outer glow sphere
@@ -12,27 +13,6 @@ const SUN_TEXTURE_PATH = '/textures/sun.jpg'
 
 // In comparison mode, slide the Sun off to the left so it's partially visible
 const SUN_COMP_X = -30
-
-/**
- * TextureErrorBoundary for the Sun -- catches texture load failures
- * so the Sun falls back to its solid color.
- */
-class SunTextureBoundary extends Component {
-  constructor(props) {
-    super(props)
-    this.state = { hasError: false }
-  }
-  static getDerivedStateFromError() {
-    return { hasError: true }
-  }
-  componentDidCatch(error) {
-    console.warn('Sun texture load failed:', error.message)
-  }
-  render() {
-    if (this.state.hasError) return this.props.fallback
-    return this.props.children
-  }
-}
 
 /**
  * Textured Sun sphere -- MeshBasicMaterial (self-lit, NOT MeshStandard).
@@ -121,11 +101,11 @@ export default function Sun() {
         onPointerOver={handlePointerOver}
         onPointerOut={handlePointerOut}
       >
-        <SunTextureBoundary fallback={<FallbackSunSphere />}>
+        <TextureErrorBoundary name="sun" fallback={<FallbackSunSphere />}>
           <Suspense fallback={<FallbackSunSphere />}>
             <TexturedSunSphere />
           </Suspense>
-        </SunTextureBoundary>
+        </TextureErrorBoundary>
       </group>
 
       {/* Invisible expanded click target — only in normal mode.

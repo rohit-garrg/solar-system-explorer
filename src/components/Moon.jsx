@@ -1,29 +1,9 @@
-import { useRef, useCallback, memo, Suspense, Component } from 'react'
+import { useRef, useCallback, memo, Suspense } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { useTexture } from '@react-three/drei'
 import { MOONS, getHitRadius } from '../utils/scaleConfig'
 import useStore from '../stores/useStore'
-
-/**
- * MoonTextureErrorBoundary -- catches texture load failures (e.g. 404 for moons
- * without texture files on disk) so the moon renders with its solid fallback color.
- */
-class MoonTextureErrorBoundary extends Component {
-  constructor(props) {
-    super(props)
-    this.state = { hasError: false }
-  }
-  static getDerivedStateFromError() {
-    return { hasError: true }
-  }
-  componentDidCatch(error) {
-    console.warn(`Moon texture load failed for ${this.props.name || 'moon'}:`, error.message)
-  }
-  render() {
-    if (this.state.hasError) return this.props.fallback
-    return this.props.children
-  }
-}
+import TextureErrorBoundary from './TextureErrorBoundary'
 
 /**
  * TexturedMoonSphere -- loads a moon texture and applies it to a sphere.
@@ -35,6 +15,19 @@ function TexturedMoonSphere({ radius, texturePath, segments }) {
     <>
       <sphereGeometry args={[radius, segments, segments]} />
       <meshStandardMaterial map={texture} />
+    </>
+  )
+}
+
+/**
+ * FallbackMoonMaterial -- solid-color geometry+material used as Suspense/ErrorBoundary
+ * fallback and when no texture path is provided.
+ */
+function FallbackMoonMaterial({ radius, color, segments }) {
+  return (
+    <>
+      <sphereGeometry args={[radius, segments, segments]} />
+      <meshStandardMaterial color={color} />
     </>
   )
 }
@@ -146,26 +139,17 @@ function MoonInner({ moonKey, fallbackColor = '#888888', texturePath }) {
         {/* Moon sphere -- textured if available, solid-color fallback */}
         <mesh ref={meshRef}>
           {texturePath ? (
-            <MoonTextureErrorBoundary name={moonKey} fallback={
-              <>
-                <sphereGeometry args={[radius, segments, segments]} />
-                <meshStandardMaterial color={fallbackColor} />
-              </>
+            <TextureErrorBoundary name={moonKey} fallback={
+              <FallbackMoonMaterial radius={radius} color={fallbackColor} segments={segments} />
             }>
               <Suspense fallback={
-                <>
-                  <sphereGeometry args={[radius, segments, segments]} />
-                  <meshStandardMaterial color={fallbackColor} />
-                </>
+                <FallbackMoonMaterial radius={radius} color={fallbackColor} segments={segments} />
               }>
                 <TexturedMoonSphere radius={radius} texturePath={texturePath} segments={segments} />
               </Suspense>
-            </MoonTextureErrorBoundary>
+            </TextureErrorBoundary>
           ) : (
-            <>
-              <sphereGeometry args={[radius, segments, segments]} />
-              <meshStandardMaterial color={fallbackColor} />
-            </>
+            <FallbackMoonMaterial radius={radius} color={fallbackColor} segments={segments} />
           )}
         </mesh>
 

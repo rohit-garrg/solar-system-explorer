@@ -12,6 +12,7 @@ import SoundEnableButton from './components/ui/SoundEnableButton'
 import VolumeControl from './components/ui/VolumeControl'
 import SizeComparison from './components/ui/SizeComparison'
 import PostcardCapture from './components/ui/PostcardCapture'
+import FullscreenToggle from './components/ui/FullscreenToggle'
 import AudioManager from './components/AudioManager'
 import { CAMERA } from './utils/scaleConfig'
 
@@ -91,6 +92,7 @@ export default function App() {
         <VolumeControl />
         <SizeComparison />
         <PostcardCapture />
+        <FullscreenToggle />
         <AudioManager />
 
         {/* Loading screen -- z-200, fades after 1.5s */}

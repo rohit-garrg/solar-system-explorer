@@ -151,3 +151,10 @@ Step 18: DONE - Build and Deployment
 - iframe-test.html: test page with embedded dist/index.html and manual checklist
 - README.md: features, tech stack, setup, textures, audio, iframe embedding, keyboard shortcuts, performance, architecture
 - Final build: 3 JS chunks (three 674KB, react-three 376KB, app 109KB) + CSS 12KB
+
+Step 19: DONE - Texture Loading Code Cleanup
+- Extracted shared TextureErrorBoundary into src/components/TextureErrorBoundary.jsx (~28 lines)
+- Planet.jsx: removed local TextureErrorBoundary class, imported shared one, extracted earthCloudProps/venusCloudProps to eliminate 6x repeated 7-prop CloudLayer calls
+- Moon.jsx: removed local MoonTextureErrorBoundary class, imported shared one, extracted FallbackMoonMaterial component to replace 3 identical inline geometry+material blocks
+- Sun.jsx: removed local SunTextureBoundary class, imported shared one
+- Net: ~50 lines of duplicated code removed, zero behavior change

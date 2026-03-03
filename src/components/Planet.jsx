@@ -1,4 +1,4 @@
-import { useRef, useState, useCallback, useMemo, memo, Suspense, Component } from 'react'
+import { useRef, useState, useCallback, useMemo, memo, Suspense } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { useTexture, Html } from '@react-three/drei'
 import * as THREE from 'three'
@@ -20,30 +20,7 @@ import useStore from '../stores/useStore'
 import planetsData from '../data/planets.json'
 import moonsData from '../data/moons.json'
 import Moon from './Moon'
-
-/**
- * TextureErrorBoundary -- catches texture load failures so the planet
- * falls back to its solid color without crashing the app.
- */
-class TextureErrorBoundary extends Component {
-  constructor(props) {
-    super(props)
-    this.state = { hasError: false }
-  }
-
-  static getDerivedStateFromError() {
-    return { hasError: true }
-  }
-
-  componentDidCatch(error) {
-    console.warn(`Texture load failed for ${this.props.name || 'planet'}:`, error.message)
-  }
-
-  render() {
-    if (this.state.hasError) return this.props.fallback
-    return this.props.children
-  }
-}
+import TextureErrorBoundary from './TextureErrorBoundary'
 
 // Sphere segment counts by quality level
 const SEGMENTS_BY_QUALITY = { high: 64, medium: 32, low: 16 }
@@ -365,6 +342,19 @@ function PlanetInner({ planetKey, initialAngle = 0 }) {
   // Read comparison mode for conditional rendering
   const sizeComparisonMode = useStore((s) => s.sizeComparisonMode)
 
+  // Cloud layer props -- extracted to avoid repeating 7 props 3x per cloud layer
+  const earthCloudProps = planetKey === 'earth' ? {
+    radius, cloudRadiusScale: planetInfo.cloudRadiusScale || 1.02,
+    opacity: planetInfo.cloudOpacity || 0.4, color: 'white',
+    rotSpeed, cloudRotMult: planetInfo.cloudRotationMultiplier || 1.1, segments,
+  } : null
+
+  const venusCloudProps = planetKey === 'venus' ? {
+    radius, cloudRadiusScale: planetInfo.cloudRadiusScale || 1.03,
+    opacity: planetInfo.cloudOpacity || 0.7, color: '#F5F0D0',
+    rotSpeed, cloudRotMult: 1, segments,
+  } : null
+
   return (
     <group ref={outerGroupRef}>
       <group ref={offsetGroupRef} position={[distance, 0, 0]}>
@@ -385,34 +375,26 @@ function PlanetInner({ planetKey, initialAngle = 0 }) {
             </TextureErrorBoundary>
 
             {/* Earth clouds -- textured if available, solid-color fallback */}
-            {planetKey === 'earth' && (
-              <TextureErrorBoundary name="earth-clouds" fallback={
-                <CloudLayer radius={radius} cloudRadiusScale={planetInfo.cloudRadiusScale || 1.02} opacity={planetInfo.cloudOpacity || 0.4} color="white" rotSpeed={rotSpeed} cloudRotMult={planetInfo.cloudRotationMultiplier || 1.1} segments={segments} />
-              }>
-                <Suspense fallback={
-                  <CloudLayer radius={radius} cloudRadiusScale={planetInfo.cloudRadiusScale || 1.02} opacity={planetInfo.cloudOpacity || 0.4} color="white" rotSpeed={rotSpeed} cloudRotMult={planetInfo.cloudRotationMultiplier || 1.1} segments={segments} />
-                }>
+            {earthCloudProps && (
+              <TextureErrorBoundary name="earth-clouds" fallback={<CloudLayer {...earthCloudProps} />}>
+                <Suspense fallback={<CloudLayer {...earthCloudProps} />}>
                   {planetInfo.cloudTexture ? (
-                    <TexturedCloudLayer radius={radius} cloudRadiusScale={planetInfo.cloudRadiusScale || 1.02} opacity={planetInfo.cloudOpacity || 0.4} texturePath={planetInfo.cloudTexture} rotSpeed={rotSpeed} cloudRotMult={planetInfo.cloudRotationMultiplier || 1.1} segments={segments} />
+                    <TexturedCloudLayer {...earthCloudProps} texturePath={planetInfo.cloudTexture} />
                   ) : (
-                    <CloudLayer radius={radius} cloudRadiusScale={planetInfo.cloudRadiusScale || 1.02} opacity={planetInfo.cloudOpacity || 0.4} color="white" rotSpeed={rotSpeed} cloudRotMult={planetInfo.cloudRotationMultiplier || 1.1} segments={segments} />
+                    <CloudLayer {...earthCloudProps} />
                   )}
                 </Suspense>
               </TextureErrorBoundary>
             )}
 
             {/* Venus clouds -- textured if available, solid-color fallback */}
-            {planetKey === 'venus' && (
-              <TextureErrorBoundary name="venus-clouds" fallback={
-                <CloudLayer radius={radius} cloudRadiusScale={planetInfo.cloudRadiusScale || 1.03} opacity={planetInfo.cloudOpacity || 0.7} color="#F5F0D0" rotSpeed={rotSpeed} cloudRotMult={1} segments={segments} />
-              }>
-                <Suspense fallback={
-                  <CloudLayer radius={radius} cloudRadiusScale={planetInfo.cloudRadiusScale || 1.03} opacity={planetInfo.cloudOpacity || 0.7} color="#F5F0D0" rotSpeed={rotSpeed} cloudRotMult={1} segments={segments} />
-                }>
+            {venusCloudProps && (
+              <TextureErrorBoundary name="venus-clouds" fallback={<CloudLayer {...venusCloudProps} />}>
+                <Suspense fallback={<CloudLayer {...venusCloudProps} />}>
                   {planetInfo.cloudTexture ? (
-                    <TexturedCloudLayer radius={radius} cloudRadiusScale={planetInfo.cloudRadiusScale || 1.03} opacity={planetInfo.cloudOpacity || 0.7} texturePath={planetInfo.cloudTexture} rotSpeed={rotSpeed} cloudRotMult={1} segments={segments} />
+                    <TexturedCloudLayer {...venusCloudProps} texturePath={planetInfo.cloudTexture} />
                   ) : (
-                    <CloudLayer radius={radius} cloudRadiusScale={planetInfo.cloudRadiusScale || 1.03} opacity={planetInfo.cloudOpacity || 0.7} color="#F5F0D0" rotSpeed={rotSpeed} cloudRotMult={1} segments={segments} />
+                    <CloudLayer {...venusCloudProps} />
                   )}
                 </Suspense>
               </TextureErrorBoundary>
