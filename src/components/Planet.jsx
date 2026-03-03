@@ -76,14 +76,12 @@ function FallbackSphere({ radius, color, segments = 64 }) {
 }
 
 /**
- * Saturn's ring -- RingGeometry with UV fix for proper texture mapping.
- * Rotated -PI/2 on X to lie flat in the XZ plane.
- * Goes inside the tilt group but OUTSIDE the spin group.
+ * Shared ring geometry + UV fix for Saturn's ring.
+ * Used by both the solid-color fallback and the textured version.
  */
-function SaturnRing() {
+function useRingGeometry() {
   const { innerRadius, outerRadius } = SATURN_RING
-
-  const geometry = useMemo(() => {
+  return useMemo(() => {
     const geo = new THREE.RingGeometry(innerRadius, outerRadius, 64)
     // UV fix: Three.js RingGeometry generates radial UVs that distort textures.
     // Remap so U goes linearly from inner to outer edge.
@@ -97,13 +95,39 @@ function SaturnRing() {
     }
     return geo
   }, [innerRadius, outerRadius])
+}
 
+/**
+ * Saturn's ring -- solid-color fallback version.
+ * Rotated -PI/2 on X to lie flat in the XZ plane.
+ */
+function SaturnRing() {
+  const geometry = useRingGeometry()
   return (
     <mesh geometry={geometry} rotation={[-Math.PI / 2, 0, 0]}>
       <meshStandardMaterial
         color="#D4BE8D"
         transparent
         opacity={0.7}
+        side={THREE.DoubleSide}
+        depthWrite={false}
+      />
+    </mesh>
+  )
+}
+
+/**
+ * TexturedSaturnRing -- loads the ring texture with alpha for Cassini division gaps.
+ * Falls back to SaturnRing if texture load fails.
+ */
+function TexturedSaturnRing({ texturePath }) {
+  const geometry = useRingGeometry()
+  const texture = useTexture(texturePath)
+  return (
+    <mesh geometry={geometry} rotation={[-Math.PI / 2, 0, 0]}>
+      <meshStandardMaterial
+        map={texture}
+        transparent
         side={THREE.DoubleSide}
         depthWrite={false}
       />
@@ -133,6 +157,36 @@ function CloudLayer({ radius, cloudRadiusScale, opacity, color, rotSpeed, cloudR
       <sphereGeometry args={[cloudRadius, segments, segments]} />
       <meshStandardMaterial
         color={color}
+        transparent
+        opacity={opacity}
+        depthWrite={false}
+      />
+    </mesh>
+  )
+}
+
+/**
+ * TexturedCloudLayer -- like CloudLayer but loads a texture instead of using a solid color.
+ * Lives inside Suspense so the solid-color CloudLayer shows while loading.
+ */
+function TexturedCloudLayer({ radius, cloudRadiusScale, opacity, texturePath, rotSpeed, cloudRotMult = 1, segments = 64 }) {
+  const cloudRef = useRef()
+  const cloudRadius = radius * cloudRadiusScale
+  const texture = useTexture(texturePath)
+
+  useFrame((_, delta) => {
+    if (!cloudRef.current) return
+    const { timeSpeed, isPaused } = useStore.getState()
+    if (!isPaused) {
+      cloudRef.current.rotation.y += rotSpeed * cloudRotMult * delta * timeSpeed
+    }
+  })
+
+  return (
+    <mesh ref={cloudRef}>
+      <sphereGeometry args={[cloudRadius, segments, segments]} />
+      <meshStandardMaterial
+        map={texture}
         transparent
         opacity={opacity}
         depthWrite={false}
@@ -330,35 +384,53 @@ function PlanetInner({ planetKey, initialAngle = 0 }) {
               </Suspense>
             </TextureErrorBoundary>
 
-            {/* Earth clouds */}
+            {/* Earth clouds -- textured if available, solid-color fallback */}
             {planetKey === 'earth' && (
-              <CloudLayer
-                radius={radius}
-                cloudRadiusScale={planetInfo.cloudRadiusScale || 1.02}
-                opacity={planetInfo.cloudOpacity || 0.4}
-                color="white"
-                rotSpeed={rotSpeed}
-                cloudRotMult={planetInfo.cloudRotationMultiplier || 1.1}
-                segments={segments}
-              />
+              <TextureErrorBoundary name="earth-clouds" fallback={
+                <CloudLayer radius={radius} cloudRadiusScale={planetInfo.cloudRadiusScale || 1.02} opacity={planetInfo.cloudOpacity || 0.4} color="white" rotSpeed={rotSpeed} cloudRotMult={planetInfo.cloudRotationMultiplier || 1.1} segments={segments} />
+              }>
+                <Suspense fallback={
+                  <CloudLayer radius={radius} cloudRadiusScale={planetInfo.cloudRadiusScale || 1.02} opacity={planetInfo.cloudOpacity || 0.4} color="white" rotSpeed={rotSpeed} cloudRotMult={planetInfo.cloudRotationMultiplier || 1.1} segments={segments} />
+                }>
+                  {planetInfo.cloudTexture ? (
+                    <TexturedCloudLayer radius={radius} cloudRadiusScale={planetInfo.cloudRadiusScale || 1.02} opacity={planetInfo.cloudOpacity || 0.4} texturePath={planetInfo.cloudTexture} rotSpeed={rotSpeed} cloudRotMult={planetInfo.cloudRotationMultiplier || 1.1} segments={segments} />
+                  ) : (
+                    <CloudLayer radius={radius} cloudRadiusScale={planetInfo.cloudRadiusScale || 1.02} opacity={planetInfo.cloudOpacity || 0.4} color="white" rotSpeed={rotSpeed} cloudRotMult={planetInfo.cloudRotationMultiplier || 1.1} segments={segments} />
+                  )}
+                </Suspense>
+              </TextureErrorBoundary>
             )}
 
-            {/* Venus clouds */}
+            {/* Venus clouds -- textured if available, solid-color fallback */}
             {planetKey === 'venus' && (
-              <CloudLayer
-                radius={radius}
-                cloudRadiusScale={planetInfo.cloudRadiusScale || 1.03}
-                opacity={planetInfo.cloudOpacity || 0.7}
-                color="#F5F0D0"
-                rotSpeed={rotSpeed}
-                cloudRotMult={1}
-                segments={segments}
-              />
+              <TextureErrorBoundary name="venus-clouds" fallback={
+                <CloudLayer radius={radius} cloudRadiusScale={planetInfo.cloudRadiusScale || 1.03} opacity={planetInfo.cloudOpacity || 0.7} color="#F5F0D0" rotSpeed={rotSpeed} cloudRotMult={1} segments={segments} />
+              }>
+                <Suspense fallback={
+                  <CloudLayer radius={radius} cloudRadiusScale={planetInfo.cloudRadiusScale || 1.03} opacity={planetInfo.cloudOpacity || 0.7} color="#F5F0D0" rotSpeed={rotSpeed} cloudRotMult={1} segments={segments} />
+                }>
+                  {planetInfo.cloudTexture ? (
+                    <TexturedCloudLayer radius={radius} cloudRadiusScale={planetInfo.cloudRadiusScale || 1.03} opacity={planetInfo.cloudOpacity || 0.7} texturePath={planetInfo.cloudTexture} rotSpeed={rotSpeed} cloudRotMult={1} segments={segments} />
+                  ) : (
+                    <CloudLayer radius={radius} cloudRadiusScale={planetInfo.cloudRadiusScale || 1.03} opacity={planetInfo.cloudOpacity || 0.7} color="#F5F0D0" rotSpeed={rotSpeed} cloudRotMult={1} segments={segments} />
+                  )}
+                </Suspense>
+              </TextureErrorBoundary>
             )}
           </group>
 
           {/* Saturn rings -- outside spin group so they don't rotate with the planet */}
-          {planetKey === 'saturn' && <SaturnRing />}
+          {planetKey === 'saturn' && (
+            <TextureErrorBoundary name="saturn-ring" fallback={<SaturnRing />}>
+              <Suspense fallback={<SaturnRing />}>
+                {planetInfo.ringTexture ? (
+                  <TexturedSaturnRing texturePath={planetInfo.ringTexture} />
+                ) : (
+                  <SaturnRing />
+                )}
+              </Suspense>
+            </TextureErrorBoundary>
+          )}
 
           {/* Invisible expanded hit area for small planets */}
           {needsHitArea && (
@@ -392,6 +464,7 @@ function PlanetInner({ planetKey, initialAngle = 0 }) {
                   key={m.key}
                   moonKey={m.key}
                   fallbackColor={m.fallbackColor || '#888888'}
+                  texturePath={m.texture}
                 />
               ))}
             </group>

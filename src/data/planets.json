@@ -11,7 +11,7 @@
     "name": "Venus",
     "type": "planet",
     "texture": "/textures/venus.jpg",
-    "cloudTexture": "/textures/venus-clouds.jpg",
+    "cloudTexture": "/textures/venus_atmosphere.jpg",
     "cloudOpacity": 0.7,
     "cloudRadiusScale": 1.03,
     "segments": 64
@@ -21,7 +21,7 @@
     "name": "Earth",
     "type": "planet",
     "texture": "/textures/earth/surface.jpg",
-    "cloudTexture": "/textures/earth/clouds.png",
+    "cloudTexture": "/textures/earth/clouds.jpg",
     "nightTexture": "/textures/earth/night.jpg",
     "cloudOpacity": 0.4,
     "cloudRadiusScale": 1.02,
@@ -48,7 +48,7 @@
     "type": "planet",
     "texture": "/textures/saturn.jpg",
     "hasRings": true,
-    "ringTexture": "/textures/saturn-ring.png",
+    "ringTexture": "/textures/saturn_ring_alpha.png",
     "segments": 64
   },
   {
